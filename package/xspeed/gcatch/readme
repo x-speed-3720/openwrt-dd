@@ -1,0 +1,7 @@
+usage:
+     DiagLog bin and DiagLog config must be the same path.
+     -port  diag port
+     -path  diaglog save path, make sure path dir have enough space 
+     -max   save file nums, one file is 200MB
+
+eg:  cd /usr/bin; ./DiagLog -port /dev/ttyUSB0 -path /media/udisk/ -max 500

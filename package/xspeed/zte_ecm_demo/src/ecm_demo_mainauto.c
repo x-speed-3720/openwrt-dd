@@ -36,7 +36,7 @@ void ECM_print(const char* msg, ...)
     va_list ap;
     struct timespec time;
     struct tm time_current;
-
+    
     bzero((void*)buf,sizeof(buf));
     bzero((void*)&time,sizeof(time));
     bzero((void*)&time_current,sizeof(time_current));
@@ -78,7 +78,7 @@ void ECM_usage(void)
      ECM_print_ext("\n\n====================================================");
      ECM_print_ext("============================USAGE====================");
      ECM_print_ext("=====================================================");
-
+     
      ECM_print_ext("ECM_DEMO_AUTO [-a APN] [-p DEV_NODE] [-L DBG_LEVEL]");
 
      ECM_print_ext("@-a APN; user can set apn,no more than 63 characters");
@@ -89,14 +89,14 @@ void ECM_usage(void)
 
      ECM_print_ext("@-p DEV_NODE: User configure of the ttyUSB device path,");
      ECM_print_ext("  By default, we use/dev/ttyUSB1");
-
+     
      ECM_print_ext("@-L DBG_LEVEL: User configure log level, from \'1\' to \'4\'.");
      ECM_print_ext("  By default, we use log level 3");
 
      ECM_print_ext("  Example: ECM_DEMO_AUTO  ");
 
      ECM_print_ext("  Example: ECM_DEMO_AUTO   -a 3gnet -p /dev/ttyUSB0");
-
+     
      ECM_print_ext("  Example: ECM_DEMO_AUTO   -a 3gnet -p /dev/ttyUSB0 -L 1");
 
      ECM_print_ext("  Example: ECM_DEMO_AUTO   -L 2");
@@ -106,7 +106,7 @@ void ECM_usage(void)
 }
 
 
-unsigned int ECM_auto_parse_parameter(int argc, char *argv[],
+unsigned int ECM_auto_parse_parameter(int argc, char *argv[], 
     char** apn, char** path, unsigned int* log_level)
 {
 
@@ -203,7 +203,7 @@ unsigned int ECM_auto_parse_parameter(int argc, char *argv[],
                 break;
             }
 
-            if (('1' != *var_log_level) && ('2' != *var_log_level)
+            if (('1' != *var_log_level) && ('2' != *var_log_level) 
                 && ('3' != *var_log_level) && ('4' != *var_log_level))
             {
                 var_error = 12;
@@ -263,7 +263,7 @@ unsigned int ECM_auto_parse_parameter(int argc, char *argv[],
             {
                 *log_level = ECM_LOG_L_1 ;
             }
-        }
+        }   
     }
 
     return var_error ;
@@ -299,7 +299,7 @@ int main(int argc, char *argv[])
     char*           var_path=NULL;
     unsigned int var_log_level ;
 
-    unsigned int var_demo_err_id = 0 ;
+    unsigned int var_demo_err_id = 0 ;   
 
     int var_shm_id = -1 ;
     int var_sem_id = -1 ;
@@ -329,7 +329,7 @@ int main(int argc, char *argv[])
         bzero((void*)&crnt_monitor,sizeof(ECM_auto_monitor_t));
 
         ECM_log_init(ECM_print,var_log_level);
-
+        
         /*init share memory*/
         var_shm_id = ECM_autocfg_srv_new_shm();
         ECM_auto_shm_id = var_shm_id ;
@@ -348,12 +348,19 @@ int main(int argc, char *argv[])
         ECM_print("ECM_DEMO_AUTO start...");
 
 
-        /*add liwei for xspeed project led operation*/
+        /*add liwei for ali project led operation*/
         #if (ECM_AUTO_LED_ON==ECM_DEMO_ON)
         ECM_auto_led_func_start();
         #endif
 
         do {
+            /*add liwei for fix gswerr id 0000 start */
+            #if (ECM_CALL_FIX_GSWERR_ID_0000    ==ECM_DEMO_ON)
+                //ECM_get_gswerr_id_000_status();
+                ECM_clr_gswerr_id_000_status();
+            #endif
+            /*add liwei for fix gswerr id 0000 end */
+
             var_demo_err_id = ECM_auto_demo_start(var_path, NULL, var_apn);
 
             if ( 0 != var_demo_err_id )
@@ -369,7 +376,7 @@ int main(int argc, char *argv[])
             var_not_init_flg = 0 ;
 
              while (0==ECM_auto_demo_online())
-             {
+             {               
                 ECM_auto_demo_get_monitor(&crnt_monitor);
                 ECM_autocfg_srv_sem_lock(var_sem_id);
                 ECM_autocfg_srv_set_back(cur_auto_cfg,&crnt_monitor);
@@ -433,7 +440,7 @@ int main(int argc, char *argv[])
                             prev_monitor.error_code = crnt_monitor.error_code;
                             //ECM_print("ECM_DEMO_AUTO Network Disconnect,Sim is not ready");
                     }
-                    prev_monitor.connet_status = crnt_monitor.connet_status;
+                    prev_monitor.connet_status = crnt_monitor.connet_status;                    
                 }
                 else if (1==crnt_monitor.connet_status)/*connected*/
                 {
@@ -451,6 +458,16 @@ int main(int argc, char *argv[])
                         ECM_print("ECM_DEMO_AUTO SigStrength[%01d]",crnt_monitor.net_recv_strength);
                     }
 
+                    /*add liwei for fix gswerr id 0000 start */
+                    #if (ECM_CALL_FIX_GSWERR_ID_0000    ==ECM_DEMO_ON)
+                        if (0 != ECM_get_gswerr_id_000_status() )
+                        {
+                            ECM_print("ECM_DEMO_AUTO Find Egress Format Error will reboot~");
+                            ECM_auto_demo_reboot_msg();
+                            break;
+                        }
+                    #endif
+                    /*add liwei for fix gswerr id 0000 end */
                 }
                 else if (0==crnt_monitor.connet_status)
                 {/*disconnect*/
@@ -486,7 +503,7 @@ int main(int argc, char *argv[])
 
                 }
                 sleep(2);
-
+                
             };
 
             /*wait system recover timer*/
@@ -506,3 +523,8 @@ int main(int argc, char *argv[])
     return var_error ;
 
 }
+
+
+
+
+

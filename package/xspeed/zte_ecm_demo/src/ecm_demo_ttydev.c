@@ -231,6 +231,21 @@ const ttyusb_drv_xport_t ttyusb_drv_map_tab[] =
         .magic = 0 ,
     },
 };
+/*add liwei for port error start*/
+unsigned int g_ttyusb_recv_thxd_fail_flag = 0 ;
+/*add liwei for port error end*/
+
+/*add liwei for port error start*/
+unsigned   int  ttyusb_get_thxd_failed_flg(void)
+{
+    return g_ttyusb_recv_thxd_fail_flag ;
+}
+unsigned   int  ttyusb_get_clear_failed_flg(void)
+{
+    g_ttyusb_recv_thxd_fail_flag = 0 ;
+}
+
+/*add liwei for port error end*/
 
 void ttyusb_cancel_thxd(ttyusb_dev_t* p_serial)
 {
@@ -297,7 +312,20 @@ void* ttyusb_recv_thxd(void* para)
             {
                 /* for user defined nonblock*/
                 usleep(ECM_AT_RECV_INTV);
-                ECM_log(ECM_LOG_L_3,"[info] ttyusb_recv_thxd interv");
+
+                /*add liwei for port error start*/
+                ++ g_ttyusb_recv_thxd_fail_flag  ;
+                /*add liwei for port error end*/
+
+                if (TTY_RECV_KILL!= p_serial->tty_ptxd_state)
+                {
+                    ECM_log(ECM_LOG_L_3,"[info] ttyusb_recv_thxd interv(not kill)");
+                }
+                else
+                {
+                    ECM_log(ECM_LOG_L_3,"[info] ttyusb_recv_thxd interv(killed:%d)",TTY_RECV_KILL!= p_serial->tty_ptxd_state);
+                }
+
             }
 
             /*add cancel point*/

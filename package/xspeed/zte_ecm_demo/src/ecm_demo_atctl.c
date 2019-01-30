@@ -33,7 +33,7 @@ typedef enum
     ECM_NET_GPRS=3,
     ECM_NET_CDMA=4,
     ECM_NET_EVDO=5,
-
+    
     ECM_NET_EHRPD=6,
     ECM_NET_UMTS=7,
     ECM_NET_HSDPA=8,
@@ -104,7 +104,18 @@ ECM_auto_call_txd_para_t ECM_auto_call_configure ;
 static char                 ECM_auto_port_at_path[256] = {0};
 unsigned int                ECM_auto_port_flag = 0 ;
 
-/*add liwei for xspeed project led operation*/
+
+/*add liwei for issue start*/
+ttyusb_dev_t                g_ecm_auto_serial_demo;
+/*add liwei for issue end*/
+
+/*add liwei for fix gswerr id 0000 start */
+#if (ECM_CALL_FIX_GSWERR_ID_0000    ==ECM_DEMO_ON)
+unsigned int                g_gswerr_id_000_find = 0 ;
+#endif
+/*add liwei for fix gswerr id 0000 end */
+
+/*add liwei for ali project led operation*/
 #if (ECM_AUTO_LED_ON==ECM_DEMO_ON)
 static unsigned char        ECM_auto_led_function_start = 0 ;
 #endif
@@ -112,7 +123,7 @@ static unsigned char        ECM_auto_led_function_start = 0 ;
 unsigned int ECM_auto_check_port(ttyusb_dev_t* p_serial);
 
 
-/*add liwei for xspeed project led operation*/
+/*add liwei for ali project led operation*/
 #if (ECM_AUTO_LED_ON==ECM_DEMO_ON)
 void ECM_auto_led_func_start(void)
 {
@@ -138,7 +149,7 @@ void ECM_set_personalization_at(char* person_at)
 static void ECM_auto_clear_usr_monitor(void)
 {
     pthread_mutex_lock(&usr_monitor_mux);
-
+    
     bzero((void*)&usr_monitor_info,sizeof(ECM_auto_monitor_t));
     //strcpy(usr_monitor_info.net_type_str,s_network_noserver) ;
     usr_monitor_info.net_recv_strength = ECM_DFLT_SIG_STRENGTH;
@@ -151,11 +162,11 @@ static void   ECM_auto_save_imei(void)
     int i = 0 ;
     int j = 0 ;
     for (j=0,i=0;(j<itc_tty_at_len)&&(j<itc_tty_at_len);j++)
-    {
+    {            
         if (('0'<=itc_tty_at_buff[j]) && (itc_tty_at_buff[j]<='9'))
         {
             if (i<=(sizeof(s_imei)-1)) {
-                s_imei[i] = itc_tty_at_buff[j];
+                s_imei[i] = itc_tty_at_buff[j];                    
                 i++;
             }
         }
@@ -168,7 +179,7 @@ static void   ECM_auto_save_imei(void)
         memcpy((void*)(usr_monitor_info.imei), (void*)s_imei, ECM_IMEI_NUMBERS);
         pthread_mutex_unlock(&usr_monitor_mux);
     }
-
+    
 }
 
 
@@ -178,7 +189,7 @@ static void    ECM_auto_save_iccid(void)
     int j = 0 ;
     bzero((void*)s_iccid,sizeof(s_iccid));
     for (j=0,i=0;(j<strlen(itc_tty_at_buff))&&(j<itc_tty_at_len);j++)
-    {
+    {            
         if (('0'<=itc_tty_at_buff[j]) && (itc_tty_at_buff[j]<='9'))
         {
             if (i<(sizeof(s_iccid)-1)) {
@@ -209,11 +220,11 @@ static void    ECM_auto_save_csq_strength(void)
     if ( (NULL!=strstr(itc_tty_at_buff,"+csq")) || (NULL!=strstr(itc_tty_at_buff,"+CSQ")) )
     {
         for (j=0,i=0;(j<strlen(itc_tty_at_buff))&&(j<itc_tty_at_len)&&(i<3);j++)
-        {
+        {            
             if (('0'<=itc_tty_at_buff[j]) && (itc_tty_at_buff[j]<='9'))
             {
                 i++;
-                s_csq_signal_strength = s_csq_signal_strength * 10 + ((unsigned int)(itc_tty_at_buff[j]-'0'));
+                s_csq_signal_strength = s_csq_signal_strength * 10 + ((unsigned int)(itc_tty_at_buff[j]-'0'));                
             }
             else if ( ',' == itc_tty_at_buff[j])
             {
@@ -238,7 +249,7 @@ static unsigned int     ECM_auto_save_signal_strength(unsigned int pos)/*pos=5 o
     unsigned int cur = 0 ;
     unsigned int signal_strenght = 0;
 
-    do
+    do 
     {
         for (i=0,j=0;(i<itc_tty_at_len)&&(i<TTYUSB_BUF_LEN);i++)
         {
@@ -519,7 +530,7 @@ void ECM_error_map(unsigned int error, char* error_info, char* error_ext_info)
         sprintf(str_error_ext_tip,ECM_AUTOCFG_E_RECV_AT_ERROR);
         break;
     case E_ECM_ATI_SEND_MAX:
-        sprintf(str_error_tip,"ATI Send Over Max");
+        sprintf(str_error_tip,"ATI Send Over Max");        
         sprintf(str_error_ext_tip,ECM_AUTOCFG_E_SEND_OVERMAX_ERR);
         break;
     case E_ECM_ATI_RESEND_ERR:
@@ -528,7 +539,7 @@ void ECM_error_map(unsigned int error, char* error_info, char* error_ext_info)
         break;
     case E_ECM_ATI_OTHER_ERR:
         sprintf(str_error_tip,"ATI Send Other Err");
-        sprintf(str_error_ext_tip,ECM_AUTOCFG_E_OTHER_AT_ERROR);
+        sprintf(str_error_ext_tip,ECM_AUTOCFG_E_OTHER_AT_ERROR);        
         break;
     case E_ECM_ATI_TERMINAL:
         sprintf(str_error_tip,"ATI Send Terminated");
@@ -557,7 +568,7 @@ void ECM_error_map(unsigned int error, char* error_info, char* error_ext_info)
         break;
     case E_ECM_ZSWITCH_QOTHER_ERR:
         sprintf(str_error_tip,"at+zswitch? Send Other Err");
-        sprintf(str_error_ext_tip,ECM_AUTOCFG_E_OTHER_AT_ERROR);
+        sprintf(str_error_ext_tip,ECM_AUTOCFG_E_OTHER_AT_ERROR);        
         break;
 
     case E_ECM_ZSWITCH_SEND_FAIL:
@@ -702,7 +713,7 @@ void ECM_error_map(unsigned int error, char* error_info, char* error_ext_info)
         break;
     case E_ECM_CPIN_Q_SIM_FAILURE:
         sprintf(str_error_tip,"at+cpin? SIM failure");
-        sprintf(str_error_ext_tip,ECM_AUTOCFG_E_ERROR_SIM_FAILURE);
+        sprintf(str_error_ext_tip,ECM_AUTOCFG_E_ERROR_SIM_FAILURE);        
         break;
 
     case E_ECM_ZBAND_QUERY_FAIL:
@@ -767,7 +778,7 @@ void ECM_error_map(unsigned int error, char* error_info, char* error_ext_info)
         sprintf(str_error_tip,"at+creg? send over max");
         sprintf(str_error_ext_tip,ECM_AUTOCFG_E_SEND_OVERMAX_ERR);
         break;
-    case E_ECM_CREG_QRESEND_ERR:
+    case E_ECM_CREG_QRESEND_ERR: 
         sprintf(str_error_tip,"at+creg? Re-send Err");
         sprintf(str_error_ext_tip,ECM_AUTOCFG_E_SEND_AT_ERROR);
         break;
@@ -782,7 +793,7 @@ void ECM_error_map(unsigned int error, char* error_info, char* error_ext_info)
 
     case E_ECM_CGDCONT_SEND_FAIL:
         sprintf(str_error_tip,"at+cgdcont=,, send fail");
-        sprintf(str_error_ext_tip,ECM_AUTOCFG_E_SEND_AT_ERROR);
+        sprintf(str_error_ext_tip,ECM_AUTOCFG_E_SEND_AT_ERROR);       
         break;
     case E_ECM_CGDCONT_RECV_ISSUE:
         sprintf(str_error_tip,"at+cgdcont=,, recv fail");
@@ -879,7 +890,7 @@ void ECM_error_map(unsigned int error, char* error_info, char* error_ext_info)
         sprintf(str_error_tip,"at+zecmcall? send terminated");
         sprintf(str_error_ext_tip,ECM_AUTOCFG_E_ERROR_TERMINATED);
         break;
-
+    
     case E_ECM_CFUN_1_1_SEND_FAIL:
         sprintf(str_error_tip,"at+cfun=1,1 send fail");
         sprintf(str_error_ext_tip,ECM_AUTOCFG_E_SEND_AT_ERROR);
@@ -985,7 +996,7 @@ void ECM_error_map(unsigned int error, char* error_info, char* error_ext_info)
     case E_ECM_ZPAS_QUERY_FAIL:
         sprintf(str_error_tip,"at+zpas? send fail");
         sprintf(str_error_ext_tip,ECM_AUTOCFG_E_SEND_AT_ERROR);
-        break;
+        break;        
     case E_ECM_ZPAS_QNO_SERVICE:
         sprintf(str_error_tip,"at+zpas? no servicel");
         sprintf(str_error_ext_tip,ECM_AUTOCFG_E_ERROR_NO_SERVICE);
@@ -1115,13 +1126,42 @@ void ECM_error_map(unsigned int error, char* error_info, char* error_ext_info)
         sprintf(str_error_ext_tip,ECM_AUTOCFG_E_OTHER_AT_ERROR);
         break;
 
+        /*add liwei for fix gswerr id 0000 start */
+#if (ECM_CALL_FIX_GSWERR_ID_0000    ==ECM_DEMO_ON)
+    case E_ECM_GSWERR_QUERY_FAIL:
+        sprintf(str_error_tip,"AT+GSWERR=0000 send failure");
+        sprintf(str_error_ext_tip,ECM_AUTOCFG_E_SEND_AT_ERROR);
+        break;
+    case E_ECM_GSWERR_QRECV_ISSUE:
+        sprintf(str_error_tip,"AT+GSWERR=0000 recv fail");
+        sprintf(str_error_ext_tip,ECM_AUTOCFG_E_RECV_AT_ERROR);
+        break;
+    case E_ECM_GSWERR_QUERY_MAX:
+        sprintf(str_error_tip,"AT+GSWERR=0000 send over max");
+        sprintf(str_error_ext_tip,ECM_AUTOCFG_E_SEND_OVERMAX_ERR);
+        break;
+    case E_ECM_GSWERR_QRESEND_ERR:
+        sprintf(str_error_tip,"AT+GSWERR=0000 re-send error");
+        sprintf(str_error_ext_tip,ECM_AUTOCFG_E_SEND_AT_ERROR);
+        break;
+    case E_ECM_GSWERR_QOTHER_ERR:
+        sprintf(str_error_tip,"AT+GSWERR=0000 send other error");
+        sprintf(str_error_ext_tip,ECM_AUTOCFG_E_ERROR_TERMINATED);
+        break;
+    case E_ECM_GSWERR_QTERMINAL:
+        sprintf(str_error_tip,"AT+GSWERR=0000 send terminated");
+        sprintf(str_error_ext_tip,ECM_AUTOCFG_E_OTHER_AT_ERROR);
+        break;
+#endif
+        /*add liwei for fix gswerr id 0000 end */
+
     default:
         sprintf(str_error_tip,"Other Error");
         break;
     }
 
     str_error_tip[ECM_AUTOCFG_ERR_INFO_LEN-1] = '\0';
-
+    
     if (NULL!=error_info)
     {
         sprintf(error_info,"%s", str_error_tip);
@@ -1130,7 +1170,7 @@ void ECM_error_map(unsigned int error, char* error_info, char* error_ext_info)
     if (NULL!=error_ext_info)
     {
         sprintf(error_ext_info,"%s", str_error_ext_tip);
-    }
+    }    
 
 }
 
@@ -1161,13 +1201,13 @@ void ECM_delete_echo_at(    const char* echo_at)
     if ((NULL != echo_at) && (itc_tty_at_buff[TTYUSB_BUF_LEN-1] == '\0' ))
     {
         cur_pos = strstr(itc_tty_at_buff,echo_at) ;
-
+        
         if (NULL != cur_pos)
         {
             /*remove echo_at*/
 
             cur_begin = cur_pos + strlen(echo_at);
-
+        
             if (itc_tty_at_len<=TTYUSB_BUF_LEN-1)
             {
                 cur_end = &(itc_tty_at_buff[itc_tty_at_len-1]) ;
@@ -1250,7 +1290,7 @@ void ECM_usr_cfg_set(user_cfg_item_t* cfg, char* ipv4v6, char* apn)
     if ((cfg)&&(ipv4v6))
     {
         if ((strlen(ipv4v6)<ECM_V4V6_MAX_LEN)&&(0<strlen(ipv4v6)))
-        {
+        {           
             cfg->para_ipv4v6_flag = 1 ;
             memcpy((void*)cfg->para_ipv4v6,(void*)ipv4v6,strlen(ipv4v6));
         }
@@ -1259,7 +1299,7 @@ void ECM_usr_cfg_set(user_cfg_item_t* cfg, char* ipv4v6, char* apn)
     if ((cfg)&&(apn))
     {
         if ((strlen(apn)<ECM_APN_MAX_LEN)&&(0<strlen(apn)))
-        {
+        {           
             cfg->para_apn_flag = 1 ;
             memcpy((void*)cfg->para_apn,(void*)apn,strlen(apn));
         }
@@ -1272,7 +1312,136 @@ void ECM_usr_cfg_set(user_cfg_item_t* cfg, char* ipv4v6, char* apn)
 }
 
 
-ECM_SM_RSLT_T ECM_query_tty_ati(ttyusb_dev_t* p_serial, ECM_SM_EVENT_T evt,
+/*add liwei for fix gswerr id 0000 start */
+#if (ECM_CALL_FIX_GSWERR_ID_0000    ==ECM_DEMO_ON)
+unsigned int  ECM_get_gswerr_id_000_status(void)
+{
+    return g_gswerr_id_000_find;
+}
+void  ECM_clr_gswerr_id_000_status(void)
+{
+    g_gswerr_id_000_find = 0 ;
+}
+
+ECM_SM_RSLT_T ECM_query_tty_gswerr_id_000(ttyusb_dev_t* p_serial, ECM_SM_EVENT_T evt, 
+    user_cfg_item_t* cfg,unsigned int* error, void* in, void* out)
+{
+    const char*     cmd_str = "AT+GSWERR=0000\r\n";
+    const char*     cmd_str_rsp="OK\r\n";
+    static unsigned    int  cmd_retry_cnt = 0 ;
+
+    const char*      echo_at     = "AT+GSWERR=0000";
+    ECM_SM_RSLT_T    ecm_sm_rslt = ECM_SM_EXEC_KEEP ;
+
+    *error = 0 ;
+
+    if (ECM_SM_ENTRY_EVT==evt)
+    {
+        cmd_retry_cnt = 3 ;
+        if (0==ttyusb_send(p_serial,cmd_str,strlen(cmd_str)))
+        {
+            ECM_log(ECM_LOG_L_3,"[info] send at_cmd:%s",cmd_str);
+            ITC_set_timer(&ECM_call_timer,2,0);
+        }
+        else
+        {
+            *error = E_ECM_GSWERR_QUERY_FAIL ;
+            ecm_sm_rslt = ECM_SM_EXEC_FAIL;
+            /* add liwei for bug fix start */
+            ITC_clear_timer(&ECM_call_timer);
+            /* add liwei for bug fix end */
+        }
+    }
+    else if (ECM_SM_QUERY_EVT==evt)
+    {
+
+    }
+    else if (ECM_SM_AT_RSP_EVT==evt)
+    {        
+        ECM_delete_echo_at(    echo_at );
+
+        if (1 != ECM_is_at_with_content())
+        {
+            /*ignore echo at */
+            ecm_sm_rslt = ECM_SM_EXEC_KEEP ;
+        }
+        else  if( (NULL!=strstr(itc_tty_at_buff,"+"))
+            &&     (NULL==strstr(itc_tty_at_buff,"+GSWERR:"))
+            &&     (NULL==strstr(itc_tty_at_buff,"+gswerr:")))
+        {
+            ecm_sm_rslt = ECM_SM_EXEC_KEEP ;
+        }
+        else if ( (NULL != strstr(itc_tty_at_buff,"+GSWERR:0000000A"))
+            || (NULL != strstr(itc_tty_at_buff,"+gswerr:0000000a")) )
+        {
+            *error = 0 ;
+            ITC_clear_timer(&ECM_call_timer);
+            g_gswerr_id_000_find = 0 ;
+            ECM_log(ECM_LOG_L_3,"[info] egress format is 0000000A");
+            ecm_sm_rslt = ECM_SM_EXEC_OK;
+        }
+        else if ( (NULL != strstr(itc_tty_at_buff,"+GSWERR:00000000"))
+            || (NULL != strstr(itc_tty_at_buff,"+gswerr:00000000")) )
+        {
+            *error = 0 ;
+            ITC_clear_timer(&ECM_call_timer);
+            g_gswerr_id_000_find = 1 ;
+            ECM_log(ECM_LOG_L_3,"[info] egress format error 00000000");
+            ecm_sm_rslt = ECM_SM_EXEC_OK;
+        }
+        else
+        {
+            *error = 0 ;
+            ITC_clear_timer(&ECM_call_timer);
+            g_gswerr_id_000_find = 0 ;
+            ECM_log(ECM_LOG_L_3,"[info] egress format Not Support");
+            ecm_sm_rslt = ECM_SM_EXEC_OK;
+        }
+    }
+    else if (ECM_SM_TIMEOUT_EVT==evt)
+    {
+        if(0==cmd_retry_cnt)
+        {
+            *error = E_ECM_GSWERR_QUERY_MAX ;
+            ecm_sm_rslt = ECM_SM_EXEC_FAIL;
+        }
+        else if(0==ttyusb_send(p_serial,cmd_str,strlen(cmd_str)))
+        {
+            --cmd_retry_cnt;
+            ITC_set_timer(&ECM_call_timer,2,0);
+        }
+        else 
+        {
+            --cmd_retry_cnt;
+            *error = E_ECM_GSWERR_QRESEND_ERR ;
+            ecm_sm_rslt = ECM_SM_EXEC_FAIL;
+        }
+    }
+    else if (ECM_SM_KILL_EVT==evt)
+    {
+        *error = E_ECM_GSWERR_QTERMINAL ;
+        ecm_sm_rslt = ECM_SM_EXEC_TERM;
+    }
+    else if (ECM_SM_EXIT_EVT==evt)
+    {
+        ITC_clear_timer(&ECM_call_timer);
+        usleep(ECM_AT_FLOW_INTV);
+    }
+    else
+    {
+        *error = E_ECM_GSWERR_QOTHER_ERR ;
+        ecm_sm_rslt = ECM_SM_EXEC_FAIL;
+    }
+
+    return ecm_sm_rslt ;
+}
+
+
+#endif
+/*add liwei for fix gswerr id 0000 end */
+
+
+ECM_SM_RSLT_T ECM_query_tty_ati(ttyusb_dev_t* p_serial, ECM_SM_EVENT_T evt, 
     user_cfg_item_t* cfg,unsigned int* error, void* in, void* out)
 {
     const char*     cmd_str = "ati\r\n";
@@ -1280,7 +1449,7 @@ ECM_SM_RSLT_T ECM_query_tty_ati(ttyusb_dev_t* p_serial, ECM_SM_EVENT_T evt,
     static unsigned    int  cmd_retry_cnt = 0 ;
 
     const char*     echo_at     = "ati";
-
+    
     ECM_SM_RSLT_T    ecm_sm_rslt = ECM_SM_EXEC_KEEP ;
 
     *error = 0 ;
@@ -1297,6 +1466,10 @@ ECM_SM_RSLT_T ECM_query_tty_ati(ttyusb_dev_t* p_serial, ECM_SM_EVENT_T evt,
         {
             *error = E_ECM_ATI_SEND_FAIL ;
             ecm_sm_rslt = ECM_SM_EXEC_FAIL;
+            /* add liwei for bug fix start */
+            ITC_clear_timer(&ECM_call_timer);
+            /* add liwei for bug fix end */
+
         }
     }
     else if (ECM_SM_QUERY_EVT==evt)
@@ -1304,7 +1477,7 @@ ECM_SM_RSLT_T ECM_query_tty_ati(ttyusb_dev_t* p_serial, ECM_SM_EVENT_T evt,
 
     }
     else if (ECM_SM_AT_RSP_EVT==evt)
-    {
+    {        
         ECM_delete_echo_at(    echo_at );
 
         if (1 != ECM_is_at_with_content())
@@ -1340,7 +1513,7 @@ ECM_SM_RSLT_T ECM_query_tty_ati(ttyusb_dev_t* p_serial, ECM_SM_EVENT_T evt,
             --cmd_retry_cnt;
             ITC_set_timer(&ECM_call_timer,2,0);
         }
-        else
+        else 
         {
             --cmd_retry_cnt;
             *error = E_ECM_ATI_RESEND_ERR ;
@@ -1374,7 +1547,7 @@ ECM_SM_RSLT_T ECM_query_tty_ati(ttyusb_dev_t* p_serial, ECM_SM_EVENT_T evt,
 
 
 
-ECM_SM_RSLT_T ECM_query_tty_zswitch(ttyusb_dev_t* p_serial, ECM_SM_EVENT_T evt,
+ECM_SM_RSLT_T ECM_query_tty_zswitch(ttyusb_dev_t* p_serial, ECM_SM_EVENT_T evt, 
     user_cfg_item_t* cfg,unsigned int* error, void* in, void* out)
 {
     const char*     cmd_str="at+zswitch?\r\n";
@@ -1384,7 +1557,7 @@ ECM_SM_RSLT_T ECM_query_tty_zswitch(ttyusb_dev_t* p_serial, ECM_SM_EVENT_T evt,
     static unsigned    int     cmd_retry_cnt = 0 ;
 
     const char*     echo_at     = "at+zswitch?";
-
+    
     ECM_SM_RSLT_T           ecm_sm_rslt = ECM_SM_EXEC_KEEP ;
 
     *error = 0 ;
@@ -1417,7 +1590,7 @@ ECM_SM_RSLT_T ECM_query_tty_zswitch(ttyusb_dev_t* p_serial, ECM_SM_EVENT_T evt,
             /*ignore echo at */
             ecm_sm_rslt = ECM_SM_EXEC_KEEP ;
         }
-        else  if ((NULL!=strstr(itc_tty_at_buff,"+")) && (NULL==strstr(itc_tty_at_buff,"+ZSWITCH")))
+        else  if ((NULL!=strstr(itc_tty_at_buff,"+")) && (NULL==strstr(itc_tty_at_buff,"+ZSWITCH")))            
         {
             ecm_sm_rslt = ECM_SM_EXEC_KEEP ;//ignore unsolicited request
         }
@@ -1450,10 +1623,10 @@ ECM_SM_RSLT_T ECM_query_tty_zswitch(ttyusb_dev_t* p_serial, ECM_SM_EVENT_T evt,
             --cmd_retry_cnt;
             ITC_set_timer(&ECM_call_timer,2,0);
         }
-        else
+        else 
         {
             --cmd_retry_cnt;
-
+            
             *error = E_ECM_ZSWITCH_QRESEND_ERR ;
             ecm_sm_rslt = ECM_SM_EXEC_FAIL;
         }
@@ -1477,7 +1650,7 @@ ECM_SM_RSLT_T ECM_query_tty_zswitch(ttyusb_dev_t* p_serial, ECM_SM_EVENT_T evt,
     return ecm_sm_rslt ;
 }
 
-ECM_SM_RSLT_T ECM_send_tty_zswitch(ttyusb_dev_t* p_serial, ECM_SM_EVENT_T evt,
+ECM_SM_RSLT_T ECM_send_tty_zswitch(ttyusb_dev_t* p_serial, ECM_SM_EVENT_T evt, 
     user_cfg_item_t* cfg,unsigned int* error, void* in, void* out)
 {
     const char*     cmd_str="at+zswitch=l\r\n";
@@ -1545,7 +1718,7 @@ ECM_SM_RSLT_T ECM_send_tty_zswitch(ttyusb_dev_t* p_serial, ECM_SM_EVENT_T evt,
             --cmd_retry_cnt;
             ITC_set_timer(&ECM_call_timer,2,0);
         }
-        else
+        else 
         {
             --cmd_retry_cnt;
             *error = E_ECM_ZSWITCH_RESEND_ERR;
@@ -1573,7 +1746,7 @@ ECM_SM_RSLT_T ECM_send_tty_zswitch(ttyusb_dev_t* p_serial, ECM_SM_EVENT_T evt,
 
 
 
-ECM_SM_RSLT_T ECM_query_tty_zadset(ttyusb_dev_t* p_serial, ECM_SM_EVENT_T evt,
+ECM_SM_RSLT_T ECM_query_tty_zadset(ttyusb_dev_t* p_serial, ECM_SM_EVENT_T evt, 
     user_cfg_item_t* cfg,unsigned int* error, void* in, void* out)
 {
     const char*     cmd_str="at+zadset?\r\n";
@@ -1614,7 +1787,7 @@ ECM_SM_RSLT_T ECM_query_tty_zadset(ttyusb_dev_t* p_serial, ECM_SM_EVENT_T evt,
             /*ignore echo at */
             ecm_sm_rslt = ECM_SM_EXEC_KEEP ;
         }
-        else if(  (NULL!=strstr(itc_tty_at_buff,"+"))
+        else if(  (NULL!=strstr(itc_tty_at_buff,"+")) 
                && (NULL==strstr(itc_tty_at_buff,"+ZADSET"))
                && (NULL==strstr(itc_tty_at_buff,"+zadset")))
         {
@@ -1644,7 +1817,7 @@ ECM_SM_RSLT_T ECM_query_tty_zadset(ttyusb_dev_t* p_serial, ECM_SM_EVENT_T evt,
             --cmd_retry_cnt;
             ITC_set_timer(&ECM_call_timer,2,0);
         }
-        else
+        else 
         {
             --cmd_retry_cnt;
             *error = E_ECM_ZADSET_QRESEND_ERR;
@@ -1654,7 +1827,7 @@ ECM_SM_RSLT_T ECM_query_tty_zadset(ttyusb_dev_t* p_serial, ECM_SM_EVENT_T evt,
     else if (ECM_SM_KILL_EVT==evt)
     {
         *error = E_ECM_ZADSET_QUERY_TERM;
-        ecm_sm_rslt = ECM_SM_EXEC_TERM;
+        ecm_sm_rslt = ECM_SM_EXEC_TERM;        
     }
     else if (ECM_SM_EXIT_EVT==evt)
     {
@@ -1670,7 +1843,7 @@ ECM_SM_RSLT_T ECM_query_tty_zadset(ttyusb_dev_t* p_serial, ECM_SM_EVENT_T evt,
     return ecm_sm_rslt ;
 }
 
-ECM_SM_RSLT_T ECM_send_tty_zadset(ttyusb_dev_t* p_serial, ECM_SM_EVENT_T evt,
+ECM_SM_RSLT_T ECM_send_tty_zadset(ttyusb_dev_t* p_serial, ECM_SM_EVENT_T evt, 
     user_cfg_item_t* cfg,unsigned int* error, void* in, void* out)
 {
     const char*     cmd_str="at+zadset=e\r\n";
@@ -1703,7 +1876,7 @@ ECM_SM_RSLT_T ECM_send_tty_zadset(ttyusb_dev_t* p_serial, ECM_SM_EVENT_T evt,
 
     }
     else if (ECM_SM_AT_RSP_EVT==evt)
-    {
+    {        
 
         ECM_delete_echo_at(    echo_at );
 
@@ -1740,7 +1913,7 @@ ECM_SM_RSLT_T ECM_send_tty_zadset(ttyusb_dev_t* p_serial, ECM_SM_EVENT_T evt,
             --cmd_retry_cnt;
             ITC_set_timer(&ECM_call_timer,2,0);
         }
-        else
+        else 
         {
             --cmd_retry_cnt;
             *error = E_ECM_ZADSET_RESEND_ERR;
@@ -1750,7 +1923,7 @@ ECM_SM_RSLT_T ECM_send_tty_zadset(ttyusb_dev_t* p_serial, ECM_SM_EVENT_T evt,
     else if (ECM_SM_KILL_EVT==evt)
     {
         *error = E_ECM_ZADSET_OTHER_ERR;
-        ecm_sm_rslt = ECM_SM_EXEC_TERM;
+        ecm_sm_rslt = ECM_SM_EXEC_TERM;        
     }
     else if (ECM_SM_EXIT_EVT==evt)
     {
@@ -1770,7 +1943,7 @@ ECM_SM_RSLT_T ECM_send_tty_zadset(ttyusb_dev_t* p_serial, ECM_SM_EVENT_T evt,
 
 
 
-ECM_SM_RSLT_T ECM_query_tty_cfun(ttyusb_dev_t* p_serial, ECM_SM_EVENT_T evt,
+ECM_SM_RSLT_T ECM_query_tty_cfun(ttyusb_dev_t* p_serial, ECM_SM_EVENT_T evt, 
     user_cfg_item_t* cfg,unsigned int* error, void* in, void* out)
 {
     const char*     cmd_str="at+cfun?\r\n";
@@ -1847,7 +2020,7 @@ ECM_SM_RSLT_T ECM_query_tty_cfun(ttyusb_dev_t* p_serial, ECM_SM_EVENT_T evt,
             --cmd_retry_cnt;
             ITC_set_timer(&ECM_call_timer,2,0);
         }
-        else
+        else 
         {
             --cmd_retry_cnt;
             *error = E_ECM_CFUN_QRESEND_ERR;
@@ -1875,7 +2048,7 @@ ECM_SM_RSLT_T ECM_query_tty_cfun(ttyusb_dev_t* p_serial, ECM_SM_EVENT_T evt,
 
 
 
-ECM_SM_RSLT_T ECM_query_tty_cpin(ttyusb_dev_t* p_serial, ECM_SM_EVENT_T evt,
+ECM_SM_RSLT_T ECM_query_tty_cpin(ttyusb_dev_t* p_serial, ECM_SM_EVENT_T evt, 
     user_cfg_item_t* cfg,unsigned int* error, void* in, void* out)
 {
     const char*        cmd_str="at+cpin?\r\n";
@@ -1906,7 +2079,7 @@ ECM_SM_RSLT_T ECM_query_tty_cpin(ttyusb_dev_t* p_serial, ECM_SM_EVENT_T evt,
         //pthread_mutex_lock(&usr_monitor_mux);
         //sprintf(usr_monitor_info.sim_status,"%s",s_sim_status);
         //pthread_mutex_unlock(&usr_monitor_mux);
-
+    
         cmd_retry_cnt = 3 ;
         if (0==ttyusb_send(p_serial,cmd_str,strlen(cmd_str)))
         {
@@ -1960,7 +2133,7 @@ ECM_SM_RSLT_T ECM_query_tty_cpin(ttyusb_dev_t* p_serial, ECM_SM_EVENT_T evt,
             ecm_sm_rslt = ECM_SM_EXEC_FAIL;
             *error = E_ECM_CPIN_QNOT_INSERT;
 
-            /*add liwei for xspeed project led operation*/
+            /*add liwei for ali project led operation*/
             #if (ECM_AUTO_LED_ON==ECM_DEMO_ON)
             if (1==ECM_auto_led_function_start)
             {
@@ -1981,7 +2154,7 @@ ECM_SM_RSLT_T ECM_query_tty_cpin(ttyusb_dev_t* p_serial, ECM_SM_EVENT_T evt,
             ecm_sm_rslt = ECM_SM_EXEC_FAIL;
             *error = E_ECM_CPIN_Q_SIM_BUSY;
 
-            /*add liwei for xspeed project led operation*/
+            /*add liwei for ali project led operation*/
             #if (ECM_AUTO_LED_ON==ECM_DEMO_ON)
             if (1==ECM_auto_led_function_start)
             {
@@ -2000,9 +2173,9 @@ ECM_SM_RSLT_T ECM_query_tty_cpin(ttyusb_dev_t* p_serial, ECM_SM_EVENT_T evt,
 
             ITC_clear_timer(&ECM_call_timer);
             ecm_sm_rslt = ECM_SM_EXEC_FAIL;
-            *error = E_ECM_CPIN_Q_SIM_PIN;
+            *error = E_ECM_CPIN_Q_SIM_PIN;            
 
-            /*add liwei for xspeed project led operation*/
+            /*add liwei for ali project led operation*/
             #if (ECM_AUTO_LED_ON==ECM_DEMO_ON)
             if (1==ECM_auto_led_function_start)
             {
@@ -2023,7 +2196,7 @@ ECM_SM_RSLT_T ECM_query_tty_cpin(ttyusb_dev_t* p_serial, ECM_SM_EVENT_T evt,
             ecm_sm_rslt = ECM_SM_EXEC_FAIL;
             *error = E_ECM_CPIN_Q_SIM_PUK;
 
-            /*add liwei for xspeed project led operation*/
+            /*add liwei for ali project led operation*/
             #if (ECM_AUTO_LED_ON==ECM_DEMO_ON)
             if (1==ECM_auto_led_function_start)
             {
@@ -2044,7 +2217,7 @@ ECM_SM_RSLT_T ECM_query_tty_cpin(ttyusb_dev_t* p_serial, ECM_SM_EVENT_T evt,
             ecm_sm_rslt = ECM_SM_EXEC_FAIL;
             *error = E_ECM_CPIN_Q_SIM_FAILURE;
 
-            /*add liwei for xspeed project led operation*/
+            /*add liwei for ali project led operation*/
             #if (ECM_AUTO_LED_ON==ECM_DEMO_ON)
             if (1==ECM_auto_led_function_start)
             {
@@ -2065,7 +2238,7 @@ ECM_SM_RSLT_T ECM_query_tty_cpin(ttyusb_dev_t* p_serial, ECM_SM_EVENT_T evt,
             *error = E_ECM_CPIN_QRECV_ISSUE;
             ecm_sm_rslt = ECM_SM_EXEC_FAIL;
 
-            /*add liwei for xspeed project led operation*/
+            /*add liwei for ali project led operation*/
             #if (ECM_AUTO_LED_ON==ECM_DEMO_ON)
             if (1==ECM_auto_led_function_start)
             {
@@ -2087,7 +2260,7 @@ ECM_SM_RSLT_T ECM_query_tty_cpin(ttyusb_dev_t* p_serial, ECM_SM_EVENT_T evt,
             --cmd_retry_cnt;
             ITC_set_timer(&ECM_call_timer,2,0);
         }
-        else
+        else 
         {
             --cmd_retry_cnt;
             *error = E_ECM_CPIN_QRESEND_ERR;
@@ -2114,7 +2287,7 @@ ECM_SM_RSLT_T ECM_query_tty_cpin(ttyusb_dev_t* p_serial, ECM_SM_EVENT_T evt,
 }
 
 
-ECM_SM_RSLT_T ECM_query_tty_zband(ttyusb_dev_t* p_serial, ECM_SM_EVENT_T evt,
+ECM_SM_RSLT_T ECM_query_tty_zband(ttyusb_dev_t* p_serial, ECM_SM_EVENT_T evt, 
     user_cfg_item_t* cfg,unsigned int* error, void* in, void* out)
 {
     const char*        cmd_str="at+zband?\r\n";//at+zband=all,all,all,all
@@ -2172,7 +2345,7 @@ ECM_SM_RSLT_T ECM_query_tty_zband(ttyusb_dev_t* p_serial, ECM_SM_EVENT_T evt,
             *error = E_ECM_ZBAND_QRECV_ISSUE;
             ecm_sm_rslt = ECM_SM_EXEC_FAIL;
 
-            /*add liwei for xspeed project led operation*/
+            /*add liwei for ali project led operation*/
             #if (ECM_AUTO_LED_ON==ECM_DEMO_ON)
             if (1==ECM_auto_led_function_start)
             {
@@ -2194,7 +2367,7 @@ ECM_SM_RSLT_T ECM_query_tty_zband(ttyusb_dev_t* p_serial, ECM_SM_EVENT_T evt,
             --cmd_retry_cnt;
             ITC_set_timer(&ECM_call_timer,2,0);
         }
-        else
+        else 
         {
             --cmd_retry_cnt;
             *error = E_ECM_ZBAND_QRESEND_ERR;
@@ -2220,7 +2393,7 @@ ECM_SM_RSLT_T ECM_query_tty_zband(ttyusb_dev_t* p_serial, ECM_SM_EVENT_T evt,
     return ecm_sm_rslt ;
 }
 
-ECM_SM_RSLT_T ECM_query_tty_csq(ttyusb_dev_t* p_serial, ECM_SM_EVENT_T evt,
+ECM_SM_RSLT_T ECM_query_tty_csq(ttyusb_dev_t* p_serial, ECM_SM_EVENT_T evt, 
     user_cfg_item_t* cfg,unsigned int* error, void* in, void* out)
 {
     const char*        cmd_str="at+csq\r\n";
@@ -2262,7 +2435,7 @@ ECM_SM_RSLT_T ECM_query_tty_csq(ttyusb_dev_t* p_serial, ECM_SM_EVENT_T evt,
             ecm_sm_rslt = ECM_SM_EXEC_KEEP ;
         }
         else if ((NULL!=strstr(itc_tty_at_buff,"+")) && (NULL==strstr(itc_tty_at_buff,"+CSQ"))
-            && (NULL==strstr(itc_tty_at_buff,"+csq")))
+            && (NULL==strstr(itc_tty_at_buff,"+csq")))            
         {
             ecm_sm_rslt = ECM_SM_EXEC_KEEP ;//ignore unsolicited request
         }
@@ -2279,7 +2452,7 @@ ECM_SM_RSLT_T ECM_query_tty_csq(ttyusb_dev_t* p_serial, ECM_SM_EVENT_T evt,
             *error = E_ECM_CSQ_QRECV_ISSUE;
             ecm_sm_rslt = ECM_SM_EXEC_FAIL;
 
-            /*add liwei for xspeed project led operation*/
+            /*add liwei for ali project led operation*/
             #if (ECM_AUTO_LED_ON==ECM_DEMO_ON)
             if (1==ECM_auto_led_function_start)
             {
@@ -2301,7 +2474,7 @@ ECM_SM_RSLT_T ECM_query_tty_csq(ttyusb_dev_t* p_serial, ECM_SM_EVENT_T evt,
             --cmd_retry_cnt;
             ITC_set_timer(&ECM_call_timer,2,0);
         }
-        else
+        else 
         {
             --cmd_retry_cnt;
             *error = E_ECM_CSQ_QRESEND_ERR;
@@ -2328,7 +2501,7 @@ ECM_SM_RSLT_T ECM_query_tty_csq(ttyusb_dev_t* p_serial, ECM_SM_EVENT_T evt,
 }
 
 
-ECM_SM_RSLT_T ECM_query_tty_creg(ttyusb_dev_t* p_serial, ECM_SM_EVENT_T evt,
+ECM_SM_RSLT_T ECM_query_tty_creg(ttyusb_dev_t* p_serial, ECM_SM_EVENT_T evt, 
     user_cfg_item_t* cfg,unsigned int* error, void* in, void* out)
 {
     const char*        cmd_str="at+creg?\r\n";
@@ -2340,7 +2513,7 @@ ECM_SM_RSLT_T ECM_query_tty_creg(ttyusb_dev_t* p_serial, ECM_SM_EVENT_T evt,
     const char*        reg_str_rsp6="+CREG: 1,5";
     const char*        reg_str_rsp7="+CREG: 2,5";
     const char*        reg_str_rsp8="+CREG: 3,5";
-
+    
     static unsigned    int     cmd_retry_cnt = 0 ;
 
     const char*     echo_at     = "at+creg?";
@@ -2386,7 +2559,7 @@ ECM_SM_RSLT_T ECM_query_tty_creg(ttyusb_dev_t* p_serial, ECM_SM_EVENT_T evt,
             ITC_clear_timer(&ECM_call_timer);
             ecm_sm_rslt = ECM_SM_EXEC_OK;
 
-            /*add liwei for xspeed project led operation*/
+            /*add liwei for ali project led operation*/
             #if (ECM_AUTO_LED_ON==ECM_DEMO_ON)
             if (1==ECM_auto_led_function_start)
             {
@@ -2400,7 +2573,7 @@ ECM_SM_RSLT_T ECM_query_tty_creg(ttyusb_dev_t* p_serial, ECM_SM_EVENT_T evt,
             ITC_clear_timer(&ECM_call_timer);
             ecm_sm_rslt = ECM_SM_EXEC_OK;
 
-            /*add liwei for xspeed project led operation*/
+            /*add liwei for ali project led operation*/
             #if (ECM_AUTO_LED_ON==ECM_DEMO_ON)
             if (1==ECM_auto_led_function_start)
             {
@@ -2414,7 +2587,7 @@ ECM_SM_RSLT_T ECM_query_tty_creg(ttyusb_dev_t* p_serial, ECM_SM_EVENT_T evt,
             ITC_clear_timer(&ECM_call_timer);
             ecm_sm_rslt = ECM_SM_EXEC_OK;
 
-            /*add liwei for xspeed project led operation*/
+            /*add liwei for ali project led operation*/
             #if (ECM_AUTO_LED_ON==ECM_DEMO_ON)
             if (1==ECM_auto_led_function_start)
             {
@@ -2428,7 +2601,7 @@ ECM_SM_RSLT_T ECM_query_tty_creg(ttyusb_dev_t* p_serial, ECM_SM_EVENT_T evt,
             ITC_clear_timer(&ECM_call_timer);
             ecm_sm_rslt = ECM_SM_EXEC_OK;
 
-            /*add liwei for xspeed project led operation*/
+            /*add liwei for ali project led operation*/
             #if (ECM_AUTO_LED_ON==ECM_DEMO_ON)
             if (1==ECM_auto_led_function_start)
             {
@@ -2442,7 +2615,7 @@ ECM_SM_RSLT_T ECM_query_tty_creg(ttyusb_dev_t* p_serial, ECM_SM_EVENT_T evt,
             ITC_clear_timer(&ECM_call_timer);
             ecm_sm_rslt = ECM_SM_EXEC_OK;
 
-            /*add liwei for xspeed project led operation*/
+            /*add liwei for ali project led operation*/
             #if (ECM_AUTO_LED_ON==ECM_DEMO_ON)
             if (1==ECM_auto_led_function_start)
             {
@@ -2456,7 +2629,7 @@ ECM_SM_RSLT_T ECM_query_tty_creg(ttyusb_dev_t* p_serial, ECM_SM_EVENT_T evt,
             ITC_clear_timer(&ECM_call_timer);
             ecm_sm_rslt = ECM_SM_EXEC_OK;
 
-            /*add liwei for xspeed project led operation*/
+            /*add liwei for ali project led operation*/
             #if (ECM_AUTO_LED_ON==ECM_DEMO_ON)
             if (1==ECM_auto_led_function_start)
             {
@@ -2470,7 +2643,7 @@ ECM_SM_RSLT_T ECM_query_tty_creg(ttyusb_dev_t* p_serial, ECM_SM_EVENT_T evt,
             ITC_clear_timer(&ECM_call_timer);
             ecm_sm_rslt = ECM_SM_EXEC_OK;
 
-            /*add liwei for xspeed project led operation*/
+            /*add liwei for ali project led operation*/
             #if (ECM_AUTO_LED_ON==ECM_DEMO_ON)
             if (1==ECM_auto_led_function_start)
             {
@@ -2484,7 +2657,7 @@ ECM_SM_RSLT_T ECM_query_tty_creg(ttyusb_dev_t* p_serial, ECM_SM_EVENT_T evt,
             ITC_clear_timer(&ECM_call_timer);
             ecm_sm_rslt = ECM_SM_EXEC_OK;
 
-            /*add liwei for xspeed project led operation*/
+            /*add liwei for ali project led operation*/
             #if (ECM_AUTO_LED_ON==ECM_DEMO_ON)
             if (1==ECM_auto_led_function_start)
             {
@@ -2497,7 +2670,7 @@ ECM_SM_RSLT_T ECM_query_tty_creg(ttyusb_dev_t* p_serial, ECM_SM_EVENT_T evt,
         {
             /*register fail, display signal strength 199*/
             pthread_mutex_lock(&usr_monitor_mux);
-            usr_monitor_info.net_recv_strength = ECM_DFLT_SIG_STRENGTH ;
+            usr_monitor_info.net_recv_strength = ECM_DFLT_SIG_STRENGTH ;            
             bzero((void*)(usr_monitor_info.net_type_str),ECM_NET_TYPE_STR_LEN);
             strcpy(usr_monitor_info.net_type_str,s_network_noserver);
             pthread_mutex_unlock(&usr_monitor_mux);
@@ -2506,7 +2679,7 @@ ECM_SM_RSLT_T ECM_query_tty_creg(ttyusb_dev_t* p_serial, ECM_SM_EVENT_T evt,
             *error = E_ECM_CREG_QRECV_ISSUE;
             ecm_sm_rslt = ECM_SM_EXEC_FAIL;
 
-            /*add liwei for xspeed project led operation*/
+            /*add liwei for ali project led operation*/
             #if (ECM_AUTO_LED_ON==ECM_DEMO_ON)
             if (1==ECM_auto_led_function_start)
             {
@@ -2528,7 +2701,7 @@ ECM_SM_RSLT_T ECM_query_tty_creg(ttyusb_dev_t* p_serial, ECM_SM_EVENT_T evt,
             --cmd_retry_cnt;
             ITC_set_timer(&ECM_call_timer,2,0);
         }
-        else
+        else 
         {
             --cmd_retry_cnt;
             *error = E_ECM_CREG_QRESEND_ERR;
@@ -2600,7 +2773,7 @@ ECM_SM_RSLT_T ECM_send_tty_cgdcont(ttyusb_dev_t* p_serial, ECM_SM_EVENT_T evt,
         {
             strcpy(cmd_str_usr,cmd_str);
         }
-
+        
         if (0==ttyusb_send(p_serial,cmd_str_usr,strlen(cmd_str_usr)))
         {
             ECM_log(ECM_LOG_L_3,"[info] send at_cmd:%s",cmd_str_usr);
@@ -2627,7 +2800,7 @@ ECM_SM_RSLT_T ECM_send_tty_cgdcont(ttyusb_dev_t* p_serial, ECM_SM_EVENT_T evt,
             ecm_sm_rslt = ECM_SM_EXEC_KEEP ;
         }
         else if ((NULL!=strstr(itc_tty_at_buff,"+")) && (NULL==strstr(itc_tty_at_buff,"+CGDCONT"))
-            && (NULL==strstr(itc_tty_at_buff,"+cgdcont")))
+            && (NULL==strstr(itc_tty_at_buff,"+cgdcont")))            
         {
             ecm_sm_rslt = ECM_SM_EXEC_KEEP ;//ignore unsolicited request
         }
@@ -2665,7 +2838,7 @@ ECM_SM_RSLT_T ECM_send_tty_cgdcont(ttyusb_dev_t* p_serial, ECM_SM_EVENT_T evt,
     }
     else if (ECM_SM_KILL_EVT==evt)
     {
-
+        
         *error = E_ECM_CGDCONT_TERMINAL;
          ecm_sm_rslt = ECM_SM_EXEC_TERM;
     }
@@ -2686,7 +2859,7 @@ ECM_SM_RSLT_T ECM_send_tty_cgdcont(ttyusb_dev_t* p_serial, ECM_SM_EVENT_T evt,
 
 
 
-ECM_SM_RSLT_T ECM_send_tty_zecmcallup(ttyusb_dev_t* p_serial, ECM_SM_EVENT_T evt,
+ECM_SM_RSLT_T ECM_send_tty_zecmcallup(ttyusb_dev_t* p_serial, ECM_SM_EVENT_T evt, 
     user_cfg_item_t* cfg,unsigned int* error, void* in, void* out)
 {
     const char*        cmd_str="at+zecmcall=1\r\n";
@@ -2706,7 +2879,7 @@ ECM_SM_RSLT_T ECM_send_tty_zecmcallup(ttyusb_dev_t* p_serial, ECM_SM_EVENT_T evt
         if (0==ttyusb_send(p_serial,cmd_str,strlen(cmd_str)))
         {
             ECM_log(ECM_LOG_L_3,"[info] send at_cmd:%s",cmd_str);
-            ITC_set_timer(&ECM_call_timer,8,0);
+            ITC_set_timer(&ECM_call_timer,9,0);
         }
         else
         {
@@ -2755,9 +2928,9 @@ ECM_SM_RSLT_T ECM_send_tty_zecmcallup(ttyusb_dev_t* p_serial, ECM_SM_EVENT_T evt
         else if(0==ttyusb_send(p_serial,cmd_str,strlen(cmd_str)))
         {
             --cmd_retry_cnt;
-            ITC_set_timer(&ECM_call_timer,4,0);
+            ITC_set_timer(&ECM_call_timer,9,0);
         }
-        else
+        else 
         {
             --cmd_retry_cnt;
             *error = E_ECM_ZECMCALL1_RESEND_ERR;
@@ -2785,7 +2958,7 @@ ECM_SM_RSLT_T ECM_send_tty_zecmcallup(ttyusb_dev_t* p_serial, ECM_SM_EVENT_T evt
 }
 
 
-ECM_SM_RSLT_T ECM_send_tty_zecmcalldown(ttyusb_dev_t* p_serial, ECM_SM_EVENT_T evt,
+ECM_SM_RSLT_T ECM_send_tty_zecmcalldown(ttyusb_dev_t* p_serial, ECM_SM_EVENT_T evt, 
     user_cfg_item_t* cfg,unsigned int* error, void* in, void* out)
 {
     const char*        cmd_str="at+zecmcall=0\r\n";
@@ -2856,7 +3029,7 @@ ECM_SM_RSLT_T ECM_send_tty_zecmcalldown(ttyusb_dev_t* p_serial, ECM_SM_EVENT_T e
             --cmd_retry_cnt;
             ITC_set_timer(&ECM_call_timer,3,0);
         }
-        else
+        else 
         {
             --cmd_retry_cnt;
             *error = E_ECM_ZECMCALL0_RESEND_ERR;
@@ -2882,7 +3055,7 @@ ECM_SM_RSLT_T ECM_send_tty_zecmcalldown(ttyusb_dev_t* p_serial, ECM_SM_EVENT_T e
     return ecm_sm_rslt ;
 }
 
-ECM_SM_RSLT_T ECM_query_tty_zecmcallstatus(ttyusb_dev_t* p_serial, ECM_SM_EVENT_T evt,
+ECM_SM_RSLT_T ECM_query_tty_zecmcallstatus(ttyusb_dev_t* p_serial, ECM_SM_EVENT_T evt, 
     user_cfg_item_t* cfg,unsigned int* error, void* in, void* out)
 {
     const char*        cmd_str="at+zecmcall?\r\n";
@@ -2951,7 +3124,7 @@ ECM_SM_RSLT_T ECM_query_tty_zecmcallstatus(ttyusb_dev_t* p_serial, ECM_SM_EVENT_
             --cmd_retry_cnt;
             ITC_set_timer(&ECM_call_timer,3,0);
         }
-        else
+        else 
         {
             --cmd_retry_cnt;
             *error = E_ECM_ZECMCALL_C_QRESEND_ERR;
@@ -2981,7 +3154,7 @@ ECM_SM_RSLT_T ECM_query_tty_zecmcallstatus(ttyusb_dev_t* p_serial, ECM_SM_EVENT_
 
 
 
-ECM_SM_RSLT_T ECM_query_tty_zpdpcall(ttyusb_dev_t* p_serial, ECM_SM_EVENT_T evt,
+ECM_SM_RSLT_T ECM_query_tty_zpdpcall(ttyusb_dev_t* p_serial, ECM_SM_EVENT_T evt, 
     user_cfg_item_t* cfg,unsigned int* error, void* in, void* out)
 {
     const char*        cmd_str="at+zpdpcall?\r\n";
@@ -3052,7 +3225,7 @@ ECM_SM_RSLT_T ECM_query_tty_zpdpcall(ttyusb_dev_t* p_serial, ECM_SM_EVENT_T evt,
             --cmd_retry_cnt;
             ITC_set_timer(&ECM_call_timer,3,0);
         }
-        else
+        else 
         {
             --cmd_retry_cnt;
             *error = E_ECM_ZPDPTYPE_QRESEND_ERR;
@@ -3078,7 +3251,7 @@ ECM_SM_RSLT_T ECM_query_tty_zpdpcall(ttyusb_dev_t* p_serial, ECM_SM_EVENT_T evt,
     return ecm_sm_rslt ;
 }
 
-ECM_SM_RSLT_T ECM_query_tty_cgsn_status(ttyusb_dev_t* p_serial, ECM_SM_EVENT_T evt,
+ECM_SM_RSLT_T ECM_query_tty_cgsn_status(ttyusb_dev_t* p_serial, ECM_SM_EVENT_T evt, 
     user_cfg_item_t* cfg,unsigned int* error, void* in, void* out)
 {
     const char*        cmd_str="at+cgsn\r\n";
@@ -3122,7 +3295,7 @@ ECM_SM_RSLT_T ECM_query_tty_cgsn_status(ttyusb_dev_t* p_serial, ECM_SM_EVENT_T e
             ecm_sm_rslt = ECM_SM_EXEC_KEEP ;
         }
         else if ((NULL!=strstr(itc_tty_at_buff,"+")) && (NULL==strstr(itc_tty_at_buff,"+CGSN"))
-            && (NULL==strstr(itc_tty_at_buff,"+cgsn"))&& (NULL==strstr(itc_tty_at_buff,"+CME ERROR:")))
+            && (NULL==strstr(itc_tty_at_buff,"+cgsn"))&& (NULL==strstr(itc_tty_at_buff,"+CME ERROR:")))            
         {
             ecm_sm_rslt = ECM_SM_EXEC_KEEP ;//ignore unsolicited request
         }
@@ -3133,7 +3306,7 @@ ECM_SM_RSLT_T ECM_query_tty_cgsn_status(ttyusb_dev_t* p_serial, ECM_SM_EVENT_T e
             ecm_sm_rslt = ECM_SM_EXEC_OK;
         }
         else  if (NULL!=strstr(itc_tty_at_buff,cmd_str_rsp_error))
-        {
+        {            
             ITC_clear_timer(&ECM_call_timer);
             ecm_sm_rslt = ECM_SM_EXEC_OK;
         }
@@ -3157,7 +3330,7 @@ ECM_SM_RSLT_T ECM_query_tty_cgsn_status(ttyusb_dev_t* p_serial, ECM_SM_EVENT_T e
             --cmd_retry_cnt;
             ITC_set_timer(&ECM_call_timer,3,0);
         }
-        else
+        else 
         {
             --cmd_retry_cnt;
             *error = E_ECM_CGSN_QRESEND_ERR;
@@ -3185,7 +3358,7 @@ ECM_SM_RSLT_T ECM_query_tty_cgsn_status(ttyusb_dev_t* p_serial, ECM_SM_EVENT_T e
 
 
 
-ECM_SM_RSLT_T ECM_query_tty_zpas_status(ttyusb_dev_t* p_serial, ECM_SM_EVENT_T evt,
+ECM_SM_RSLT_T ECM_query_tty_zpas_status(ttyusb_dev_t* p_serial, ECM_SM_EVENT_T evt, 
     user_cfg_item_t* cfg,unsigned int* error, void* in, void* out)
 {
     const char*                cmd_str="at+zpas?\r\n";
@@ -3229,7 +3402,7 @@ ECM_SM_RSLT_T ECM_query_tty_zpas_status(ttyusb_dev_t* p_serial, ECM_SM_EVENT_T e
             ecm_sm_rslt = ECM_SM_EXEC_KEEP ;
         }
         else if ((NULL!=strstr(itc_tty_at_buff,"+")) && (NULL==strstr(itc_tty_at_buff,"+ZPAS"))
-            && (NULL==strstr(itc_tty_at_buff,"+zpas")))
+            && (NULL==strstr(itc_tty_at_buff,"+zpas")))            
         {
             ecm_sm_rslt = ECM_SM_EXEC_KEEP ;//ignore unsolicited request
         }
@@ -3248,7 +3421,7 @@ ECM_SM_RSLT_T ECM_query_tty_zpas_status(ttyusb_dev_t* p_serial, ECM_SM_EVENT_T e
                 s_net_signal_strength = ECM_DFLT_SIG_STRENGTH ;
                 pthread_mutex_lock(&usr_monitor_mux);
                 usr_monitor_info.net_recv_strength = s_net_signal_strength ;
-                pthread_mutex_unlock(&usr_monitor_mux);
+                pthread_mutex_unlock(&usr_monitor_mux);                
             }
             else if (NULL!=strstr(itc_tty_at_buff,s_network_limited_server))
             {
@@ -3359,7 +3532,7 @@ ECM_SM_RSLT_T ECM_query_tty_zpas_status(ttyusb_dev_t* p_serial, ECM_SM_EVENT_T e
             pthread_mutex_lock(&usr_monitor_mux);
             memcpy((void*)(usr_monitor_info.net_type_str),(void*)var_tmp_str, ECM_NET_TYPE_STR_LEN-1);
             pthread_mutex_unlock(&usr_monitor_mux);
-
+        
         }
         else
         {
@@ -3380,7 +3553,7 @@ ECM_SM_RSLT_T ECM_query_tty_zpas_status(ttyusb_dev_t* p_serial, ECM_SM_EVENT_T e
             --cmd_retry_cnt;
             ITC_set_timer(&ECM_call_timer,3,0);
         }
-        else
+        else 
         {
             --cmd_retry_cnt;
             *error = E_ECM_ZPAS_QRESEND_ERR;
@@ -3408,7 +3581,7 @@ ECM_SM_RSLT_T ECM_query_tty_zpas_status(ttyusb_dev_t* p_serial, ECM_SM_EVENT_T e
 
 
 
-ECM_SM_RSLT_T ECM_query_tty_zgeticcid_status(ttyusb_dev_t* p_serial, ECM_SM_EVENT_T evt,
+ECM_SM_RSLT_T ECM_query_tty_zgeticcid_status(ttyusb_dev_t* p_serial, ECM_SM_EVENT_T evt, 
     user_cfg_item_t* cfg,unsigned int* error, void* in, void* out)
 {
     const char*        cmd_str="at+zgeticcid\r\n";
@@ -3417,7 +3590,7 @@ ECM_SM_RSLT_T ECM_query_tty_zgeticcid_status(ttyusb_dev_t* p_serial, ECM_SM_EVEN
     static unsigned    int     cmd_retry_cnt = 0 ;
 
     const char*     echo_at     = "at+zgeticcid";
-
+    
     ECM_SM_RSLT_T           ecm_sm_rslt = ECM_SM_EXEC_KEEP ;
 
     *error = 0 ;
@@ -3450,7 +3623,7 @@ ECM_SM_RSLT_T ECM_query_tty_zgeticcid_status(ttyusb_dev_t* p_serial, ECM_SM_EVEN
             ecm_sm_rslt = ECM_SM_EXEC_KEEP ;
         }
         else if ((NULL!=strstr(itc_tty_at_buff,"+")) && (NULL==strstr(itc_tty_at_buff,"+ZGETICCID"))
-            && (NULL==strstr(itc_tty_at_buff,"+zgeticcid")))
+            && (NULL==strstr(itc_tty_at_buff,"+zgeticcid")))            
         {
             ecm_sm_rslt = ECM_SM_EXEC_KEEP ;//ignore unsolicited request
         }
@@ -3467,7 +3640,7 @@ ECM_SM_RSLT_T ECM_query_tty_zgeticcid_status(ttyusb_dev_t* p_serial, ECM_SM_EVEN
             //ecm_sm_rslt = ECM_SM_EXEC_OK;
             ecm_sm_rslt = ECM_SM_EXEC_FAIL;
 
-            /*add liwei for xspeed project led operation*/
+            /*add liwei for ali project led operation*/
             #if (ECM_AUTO_LED_ON==ECM_DEMO_ON)
             if (1==ECM_auto_led_function_start)
             {
@@ -3490,7 +3663,7 @@ ECM_SM_RSLT_T ECM_query_tty_zgeticcid_status(ttyusb_dev_t* p_serial, ECM_SM_EVEN
             --cmd_retry_cnt;
             ITC_set_timer(&ECM_call_timer,3,0);
         }
-        else
+        else 
         {
             --cmd_retry_cnt;
             *error = E_ECM_ZGETICCID_QRESEND_ERR;
@@ -3518,7 +3691,7 @@ ECM_SM_RSLT_T ECM_query_tty_zgeticcid_status(ttyusb_dev_t* p_serial, ECM_SM_EVEN
 
 
 
-ECM_SM_RSLT_T ECM_send_tty_reboot(ttyusb_dev_t* p_serial, ECM_SM_EVENT_T evt,
+ECM_SM_RSLT_T ECM_send_tty_reboot(ttyusb_dev_t* p_serial, ECM_SM_EVENT_T evt, 
     user_cfg_item_t* cfg,unsigned int* error, void* in, void* out)
 {
     const char*     cmd_str="at+cfun=1,1\r\n";
@@ -3560,7 +3733,7 @@ ECM_SM_RSLT_T ECM_send_tty_reboot(ttyusb_dev_t* p_serial, ECM_SM_EVENT_T evt,
             ecm_sm_rslt = ECM_SM_EXEC_KEEP ;
         }
         else if ((NULL!=strstr(itc_tty_at_buff,"+")) && (NULL==strstr(itc_tty_at_buff,"+CFUN"))
-            && (NULL==strstr(itc_tty_at_buff,"+cfun")))
+            && (NULL==strstr(itc_tty_at_buff,"+cfun")))            
         {
             ecm_sm_rslt = ECM_SM_EXEC_KEEP ;//ignore unsolicited request
         }
@@ -3588,7 +3761,7 @@ ECM_SM_RSLT_T ECM_send_tty_reboot(ttyusb_dev_t* p_serial, ECM_SM_EVENT_T evt,
             --cmd_retry_cnt;
             ITC_set_timer(&ECM_call_timer,2,0);
         }
-        else
+        else 
         {
             --cmd_retry_cnt;
             *error = E_ECM_CFUN_1_1_RESEND_ERR;
@@ -3614,7 +3787,7 @@ ECM_SM_RSLT_T ECM_send_tty_reboot(ttyusb_dev_t* p_serial, ECM_SM_EVENT_T evt,
     return ecm_sm_rslt ;
 }
 
-ECM_SM_RSLT_T ECM_send_tty_zsdt(ttyusb_dev_t* p_serial, ECM_SM_EVENT_T evt,
+ECM_SM_RSLT_T ECM_send_tty_zsdt(ttyusb_dev_t* p_serial, ECM_SM_EVENT_T evt, 
     user_cfg_item_t* cfg,unsigned int* error, void* in, void* out)
 {
     static char     cmd_str[24] = {0};
@@ -3636,7 +3809,7 @@ ECM_SM_RSLT_T ECM_send_tty_zsdt(ttyusb_dev_t* p_serial, ECM_SM_EVENT_T evt,
 
         sprintf(echo_at,"at+zsdt=%01d,%01d,%01d",1,
             ECM_CALL_HOST_PLUG_POLARITY,ECM_CALL_HOST_PLUG_PULL);
-
+        
         if (0==ttyusb_send(p_serial,cmd_str,strlen(cmd_str)))
         {
             ECM_log(ECM_LOG_L_3,"[info] send at_cmd:%s",cmd_str);
@@ -3662,7 +3835,7 @@ ECM_SM_RSLT_T ECM_send_tty_zsdt(ttyusb_dev_t* p_serial, ECM_SM_EVENT_T evt,
             ecm_sm_rslt = ECM_SM_EXEC_KEEP ;
         }
         else if ((NULL!=strstr(itc_tty_at_buff,"+")) && (NULL==strstr(itc_tty_at_buff,"+ZSDT"))
-            && (NULL==strstr(itc_tty_at_buff,"+zsdt")))
+            && (NULL==strstr(itc_tty_at_buff,"+zsdt")))            
         {
             ecm_sm_rslt = ECM_SM_EXEC_KEEP ;//ignore unsolicited request
         }
@@ -3688,7 +3861,7 @@ ECM_SM_RSLT_T ECM_send_tty_zsdt(ttyusb_dev_t* p_serial, ECM_SM_EVENT_T evt,
             --cmd_retry_cnt;
             ITC_set_timer(&ECM_call_timer,2,0);
         }
-        else
+        else 
         {
             --cmd_retry_cnt;
             *error = E_ECM_ZSDT_RESEND_ERR;
@@ -3698,7 +3871,7 @@ ECM_SM_RSLT_T ECM_send_tty_zsdt(ttyusb_dev_t* p_serial, ECM_SM_EVENT_T evt,
     else if (ECM_SM_KILL_EVT==evt)
     {
         *error = E_ECM_ZSDT_OTHER_ERR;
-        ecm_sm_rslt = ECM_SM_EXEC_TERM;
+        ecm_sm_rslt = ECM_SM_EXEC_TERM;        
     }
     else if (ECM_SM_EXIT_EVT==evt)
     {
@@ -3715,7 +3888,7 @@ ECM_SM_RSLT_T ECM_send_tty_zsdt(ttyusb_dev_t* p_serial, ECM_SM_EVENT_T evt,
 }
 
 
-ECM_SM_RSLT_T ECM_query_tty_zsdt(ttyusb_dev_t* p_serial, ECM_SM_EVENT_T evt,
+ECM_SM_RSLT_T ECM_query_tty_zsdt(ttyusb_dev_t* p_serial, ECM_SM_EVENT_T evt, 
     user_cfg_item_t* cfg,unsigned int* error, void* in, void* out)
 {
     const char*     cmd_str="at+zsdt?\r\n";
@@ -3757,7 +3930,7 @@ ECM_SM_RSLT_T ECM_query_tty_zsdt(ttyusb_dev_t* p_serial, ECM_SM_EVENT_T evt,
             ecm_sm_rslt = ECM_SM_EXEC_KEEP ;
         }
         else if ((NULL!=strstr(itc_tty_at_buff,"+")) && (NULL==strstr(itc_tty_at_buff,"+ZSDT"))
-            && (NULL==strstr(itc_tty_at_buff,"+zsdt")))
+            && (NULL==strstr(itc_tty_at_buff,"+zsdt")))            
         {
             ecm_sm_rslt = ECM_SM_EXEC_KEEP ;//ignore unsolicited request
         }
@@ -3786,7 +3959,7 @@ ECM_SM_RSLT_T ECM_query_tty_zsdt(ttyusb_dev_t* p_serial, ECM_SM_EVENT_T evt,
             --cmd_retry_cnt;
             ITC_set_timer(&ECM_call_timer,2,0);
         }
-        else
+        else 
         {
             --cmd_retry_cnt;
             *error = E_ECM_ZSDT_QRESEND_ERR;
@@ -3796,7 +3969,7 @@ ECM_SM_RSLT_T ECM_query_tty_zsdt(ttyusb_dev_t* p_serial, ECM_SM_EVENT_T evt,
     else if (ECM_SM_KILL_EVT==evt)
     {
         *error = E_ECM_ZSDT_QUERY_TERM;
-        ecm_sm_rslt = ECM_SM_EXEC_TERM;
+        ecm_sm_rslt = ECM_SM_EXEC_TERM;        
     }
     else if (ECM_SM_EXIT_EVT==evt)
     {
@@ -3814,7 +3987,7 @@ ECM_SM_RSLT_T ECM_query_tty_zsdt(ttyusb_dev_t* p_serial, ECM_SM_EVENT_T evt,
 
 
 /*network signal strength */
-ECM_SM_RSLT_T ECM_query_tty_zcds(ttyusb_dev_t* p_serial, ECM_SM_EVENT_T evt,
+ECM_SM_RSLT_T ECM_query_tty_zcds(ttyusb_dev_t* p_serial, ECM_SM_EVENT_T evt, 
     user_cfg_item_t* cfg,unsigned int* error, void* in, void* out)
 {
     const char*                cmd_str="at+zcds?\r\n";
@@ -3930,7 +4103,7 @@ ECM_SM_RSLT_T ECM_query_tty_zcds(ttyusb_dev_t* p_serial, ECM_SM_EVENT_T evt,
             {
                 s_net_signal_strength = ECM_DFLT_SIG_STRENGTH ;
             }
-
+            
             pthread_mutex_lock(&usr_monitor_mux);
             usr_monitor_info.net_recv_strength = s_net_signal_strength ;
             pthread_mutex_unlock(&usr_monitor_mux);
@@ -3958,7 +4131,7 @@ ECM_SM_RSLT_T ECM_query_tty_zcds(ttyusb_dev_t* p_serial, ECM_SM_EVENT_T evt,
             --cmd_retry_cnt;
             ITC_set_timer(&ECM_call_timer,3,0);
         }
-        else
+        else 
         {
             --cmd_retry_cnt;
             *error = E_ECM_ZCDS_QRESEND_ERR;
@@ -3987,9 +4160,9 @@ ECM_SM_RSLT_T ECM_query_tty_zcds(ttyusb_dev_t* p_serial, ECM_SM_EVENT_T evt,
 
 
 
-ECM_SM_RSLT_T ECM_personalization_at(ttyusb_dev_t* p_serial, ECM_SM_EVENT_T evt,
+ECM_SM_RSLT_T ECM_personalization_at(ttyusb_dev_t* p_serial, ECM_SM_EVENT_T evt, 
     user_cfg_item_t* cfg, unsigned int* error, void* in, void* out)
-{
+{   
     ECM_SM_RSLT_T    ecm_sm_rslt = ECM_SM_EXEC_KEEP ;
 
     *error = 0 ;
@@ -4013,7 +4186,7 @@ ECM_SM_RSLT_T ECM_personalization_at(ttyusb_dev_t* p_serial, ECM_SM_EVENT_T evt,
     else if (ECM_SM_AT_RSP_EVT==evt)
     {
         ECM_log(ECM_LOG_L_1,"[info] recv %s",itc_tty_at_buff);
-
+        
         ITC_clear_timer(&ECM_call_timer);
         ecm_sm_rslt = ECM_SM_EXEC_OK;
     }
@@ -4042,7 +4215,7 @@ ECM_SM_RSLT_T ECM_personalization_at(ttyusb_dev_t* p_serial, ECM_SM_EVENT_T evt,
 }
 
 
-ECM_SM_RSLT_T ECM_terminal_state(ttyusb_dev_t* p_serial, ECM_SM_EVENT_T evt,
+ECM_SM_RSLT_T ECM_terminal_state(ttyusb_dev_t* p_serial, ECM_SM_EVENT_T evt, 
     user_cfg_item_t* cfg,unsigned int* error, void* in, void* out)
 {
     *error = 0 ;
@@ -4051,7 +4224,7 @@ ECM_SM_RSLT_T ECM_terminal_state(ttyusb_dev_t* p_serial, ECM_SM_EVENT_T evt,
     return ECM_SM_EXEC_SUCC ;
 }
 
-ECM_SM_RSLT_T ECM_idle_state(ttyusb_dev_t* p_serial, ECM_SM_EVENT_T evt,
+ECM_SM_RSLT_T ECM_idle_state(ttyusb_dev_t* p_serial, ECM_SM_EVENT_T evt, 
     user_cfg_item_t* cfg,unsigned int* error, void* in, void* out)
 {
     *error = 0 ;
@@ -4142,7 +4315,7 @@ unsigned int ECM_exec_at_flow(ttyusb_dev_t* p_serial, ecm_sm_t* flow,user_cfg_it
         }
 
         ITC_signal_init();
-
+        
         rflow = (flow[pflow])(p_serial,ECM_SM_ENTRY_EVT,cfg,&at_err_id,NULL,NULL);
 
         if (ECM_SM_EXEC_FAIL==rflow)
@@ -4161,7 +4334,7 @@ unsigned int ECM_exec_at_flow(ttyusb_dev_t* p_serial, ecm_sm_t* flow,user_cfg_it
             pthread_mutex_lock(&itc_msg_mux);
 
             while ((0==itc_msg_timer)&&(0==itc_msg_atcmd)&&(0==itc_msg_terminal))
-            {
+            {                    
                     pthread_cond_wait(&itc_msg_cond, &itc_msg_mux);
             }
             if (1==itc_msg_timer)
@@ -4171,11 +4344,11 @@ unsigned int ECM_exec_at_flow(ttyusb_dev_t* p_serial, ecm_sm_t* flow,user_cfg_it
             }
             if (1==itc_msg_atcmd)
             {
-                itc_msg_atcmd = 0;
+                itc_msg_atcmd = 0;                
                 rflow = (flow[pflow])(p_serial,ECM_SM_AT_RSP_EVT,cfg,&at_err_id,NULL,NULL);
             }
             if (1==itc_msg_terminal)
-            {
+            {                
                 itc_msg_terminal = 0;
                 rflow = (flow[pflow])(p_serial,ECM_SM_KILL_EVT,cfg,&at_err_id,NULL,NULL);
             }
@@ -4211,14 +4384,14 @@ unsigned int ECM_exec_at_flow(ttyusb_dev_t* p_serial, ecm_sm_t* flow,user_cfg_it
                 error = 0;
                 break ;
             }
-            else
-            {
+            else 
+            {                
             }
 
             pthread_mutex_unlock(&itc_msg_mux);
         }
 
-
+       
     }while(0);
 
     if (0!=error)
@@ -4319,13 +4492,13 @@ unsigned int ECM_call(char* tty_path, ECM_USR_OPS_T op, char* v4v6para, char* ap
                 error = ECM_exec_at_flow(&serial_demo,ECM_query_sim_flow,&usr_cfg);
                 break;
             case ECM_OP_PERSON_AT:
-                error = ECM_exec_at_flow(&serial_demo,ECM_personalization_flow,&usr_cfg);
+                error = ECM_exec_at_flow(&serial_demo,ECM_personalization_flow,&usr_cfg);                
                 break;
             default:
                 error = ECM_exec_at_flow(&serial_demo,ECM_query_flow,&usr_cfg);
                 break;
         }
-
+       
 
         if (0 != error)
         {
@@ -4362,7 +4535,7 @@ unsigned int ECM_call_ext(int fd, ECM_USR_OPS_T op, char* v4v6para, char* apn)
 
     do {
         ttyusb_init(&serial_demo);
-
+        
         ECM_usr_cfg_init(&usr_cfg);
 
         ECM_usr_cfg_set(&usr_cfg,v4v6para,apn);
@@ -4410,7 +4583,7 @@ unsigned int ECM_call_ext(int fd, ECM_USR_OPS_T op, char* v4v6para, char* apn)
             default:
                 error = ECM_exec_at_flow(&serial_demo,ECM_query_flow,&usr_cfg);
                 break;
-        }
+        }        
 
         if (0 != error)
         {
@@ -4458,6 +4631,11 @@ ecm_sm_t ECM_auto_under_callup_flow[] = {
 
 ecm_sm_t ECM_auto_under_connect_flow[] = {
     ECM_query_tty_csq,
+/*add liwei for fix gswerr id 0000 start */
+#if (ECM_CALL_FIX_GSWERR_ID_0000    ==ECM_DEMO_ON)
+    ECM_query_tty_gswerr_id_000,
+#endif
+    /*add liwei for fix gswerr id 0000 end */
     ECM_query_tty_zpdpcall,
     ECM_query_tty_zpas_status,
     ECM_query_tty_zcds,
@@ -4487,12 +4665,16 @@ static unsigned int     pos_auto_callup_substate = 0 ;
 
 void ECM_auto_sm_init(void)
 {
-    ECM_auto_callup_state = ECM_AUTO_SM_STATE_UNINIT ;
+    ECM_auto_callup_state = ECM_AUTO_SM_STATE_UNINIT ;   
     ECM_auto_callup_state_last = ECM_AUTO_SM_STATE_UNINIT ;
     pos_auto_callup_substate = 0 ;
+
+    /*add liwei for port error start*/
+    ttyusb_get_clear_failed_flg();
+    /*add liwei for port error end*/
 }
 
-ECM_AUTO_SM_JUMP_T ECM_auto_sm_callup(ttyusb_dev_t* p_serial, ECM_AUTO_SM_EVENT_T evt,
+ECM_AUTO_SM_JUMP_T ECM_auto_sm_callup(ttyusb_dev_t* p_serial, ECM_AUTO_SM_EVENT_T evt,     
     user_cfg_item_t* cfg,   unsigned int* error, void* in, void* out)
 {
     /*auto sm*/
@@ -4539,7 +4721,7 @@ ECM_AUTO_SM_JUMP_T ECM_auto_sm_callup(ttyusb_dev_t* p_serial, ECM_AUTO_SM_EVENT_
         ECM_log(ECM_LOG_L_4,"[info] ECM_auto_sm_callup EXIT");
         rflow = (ECM_auto_under_callup_flow[pos_auto_callup_substate])(p_serial,
             ECM_SM_EXIT_EVT,cfg,&at_err_id,NULL,NULL);
-        pos_auto_callup_substate = 0;
+        pos_auto_callup_substate = 0;        
     }
     else if (ECM_AUTO_SM_REQ_QUIT_EVT==evt)
     {
@@ -4547,7 +4729,7 @@ ECM_AUTO_SM_JUMP_T ECM_auto_sm_callup(ttyusb_dev_t* p_serial, ECM_AUTO_SM_EVENT_
 
         rflow = (ECM_auto_under_callup_flow[pos_auto_callup_substate])(p_serial,
             ECM_SM_EXIT_EVT,cfg,&at_err_id,NULL,NULL);
-
+        
         ECM_auto_callup_state_last = ECM_auto_callup_state;
         ECM_auto_callup_state = ECM_AUTO_SM_STATE_CALLDOWN;
         sm_rslt = ECM_AUTO_SM_JUMP_CALLDOWN;
@@ -4625,7 +4807,7 @@ ECM_AUTO_SM_JUMP_T ECM_auto_sm_callup(ttyusb_dev_t* p_serial, ECM_AUTO_SM_EVENT_
 }
 
 
-ECM_AUTO_SM_JUMP_T ECM_auto_sm_calldown(ttyusb_dev_t* p_serial, ECM_AUTO_SM_EVENT_T evt,
+ECM_AUTO_SM_JUMP_T ECM_auto_sm_calldown(ttyusb_dev_t* p_serial, ECM_AUTO_SM_EVENT_T evt,     
     user_cfg_item_t* cfg,   unsigned int* error, void* in, void* out)
 {
     /*auto sm*/
@@ -4640,7 +4822,7 @@ ECM_AUTO_SM_JUMP_T ECM_auto_sm_calldown(ttyusb_dev_t* p_serial, ECM_AUTO_SM_EVEN
     if (ECM_AUTO_SM_ENTRY_EVT==evt)
     {
         ECM_log(ECM_LOG_L_4,"[info] ECM_auto_sm_calldown Entry");
-
+        
         pos_auto_callup_substate = 0;
         rflow = (ECM_auto_under_calldown_flow[pos_auto_callup_substate])(p_serial,
             ECM_SM_ENTRY_EVT,cfg,&at_err_id,NULL,NULL);
@@ -4734,7 +4916,7 @@ ECM_AUTO_SM_JUMP_T ECM_auto_sm_calldown(ttyusb_dev_t* p_serial, ECM_AUTO_SM_EVEN
 }
 
 
-ECM_AUTO_SM_JUMP_T ECM_auto_sm_reboot(ttyusb_dev_t* p_serial, ECM_AUTO_SM_EVENT_T evt,
+ECM_AUTO_SM_JUMP_T ECM_auto_sm_reboot(ttyusb_dev_t* p_serial, ECM_AUTO_SM_EVENT_T evt,     
     user_cfg_item_t* cfg,   unsigned int* error, void* in, void* out)
 {
     /*auto sm*/
@@ -4749,7 +4931,7 @@ ECM_AUTO_SM_JUMP_T ECM_auto_sm_reboot(ttyusb_dev_t* p_serial, ECM_AUTO_SM_EVENT_
     if (ECM_AUTO_SM_ENTRY_EVT==evt)
     {
         ECM_log(ECM_LOG_L_4,"[info] ECM_auto_sm_reboot Entry");
-
+        
         pos_auto_callup_substate = 0;
         rflow = (ECM_auto_under_reboot_flow[pos_auto_callup_substate])(p_serial,
             ECM_SM_ENTRY_EVT,cfg,&at_err_id,NULL,NULL);
@@ -4848,7 +5030,7 @@ ECM_AUTO_SM_JUMP_T ECM_auto_sm_reboot(ttyusb_dev_t* p_serial, ECM_AUTO_SM_EVENT_
 
 
 
-ECM_AUTO_SM_JUMP_T ECM_auto_sm_under_connect(ttyusb_dev_t* p_serial, ECM_AUTO_SM_EVENT_T evt,
+ECM_AUTO_SM_JUMP_T ECM_auto_sm_under_connect(ttyusb_dev_t* p_serial, ECM_AUTO_SM_EVENT_T evt,     
     user_cfg_item_t* cfg,   unsigned int* error, void* in, void* out)
 {
     /*auto sm*/
@@ -4873,7 +5055,7 @@ ECM_AUTO_SM_JUMP_T ECM_auto_sm_under_connect(ttyusb_dev_t* p_serial, ECM_AUTO_SM
         flag_delay_run_flow = 1 ;
         pos_auto_callup_substate = 0;
 
-        /*add liwei for xspeed project led operation*/
+        /*add liwei for ali project led operation*/
         #if (ECM_AUTO_LED_ON==ECM_DEMO_ON)
         if (1==ECM_auto_led_function_start)
         {
@@ -4910,7 +5092,7 @@ ECM_AUTO_SM_JUMP_T ECM_auto_sm_under_connect(ttyusb_dev_t* p_serial, ECM_AUTO_SM
         {
             rflow = (ECM_auto_under_connect_flow[pos_auto_callup_substate])(p_serial,
                 ECM_SM_TIMEOUT_EVT,cfg,&at_err_id,NULL,NULL);
-        }
+        }    
     }
     else if (ECM_AUTO_SM_KILL_EVT==evt)
     {
@@ -4929,7 +5111,7 @@ ECM_AUTO_SM_JUMP_T ECM_auto_sm_under_connect(ttyusb_dev_t* p_serial, ECM_AUTO_SM
         ITC_clear_timer(&ECM_call_timer);
         usleep(ECM_AT_FLOW_INTV);
 
-        /*add liwei for xspeed project led operation*/
+        /*add liwei for ali project led operation*/
         #if (ECM_AUTO_LED_ON==ECM_DEMO_ON)
         if (1==ECM_auto_led_function_start)
         {
@@ -4957,7 +5139,7 @@ ECM_AUTO_SM_JUMP_T ECM_auto_sm_under_connect(ttyusb_dev_t* p_serial, ECM_AUTO_SM
             ECM_SM_EXIT_EVT,cfg,&at_err_id,NULL,NULL);
 
         ECM_auto_callup_state_last = ECM_auto_callup_state;
-        ECM_auto_callup_state = ECM_AUTO_SM_STATE_REBOOT;
+        ECM_auto_callup_state = ECM_AUTO_SM_STATE_REBOOT;        
         sm_rslt = ECM_AUTO_SM_JUMP_REBOOT;
     }
     else
@@ -5044,13 +5226,35 @@ ECM_AUTO_SM_JUMP_T ECM_auto_sm_under_disconn(ttyusb_dev_t* p_serial, ECM_AUTO_SM
             pos_auto_callup_substate = 0;
             ITC_clear_timer(&ECM_call_timer);
             ttyusb_cancel_thxd(p_serial);
+
+            /*add liwei for fix bugs start*/
+            flag_delay_run_flow = 0 ;
+            /*add liwei for fix bugs end*/
+            
             sm_rslt = ECM_AUTO_SM_TERMINAL;
+            ECM_log(ECM_LOG_L_3,"[INFO] Set ECM_AUTO_SM_TERMINAL01...........");
+        }
+        else if (0 != ttyusb_get_thxd_failed_flg())
+        {
+            /*add liwei for port error start*/
+            pos_auto_callup_substate = 0;
+            ITC_clear_timer(&ECM_call_timer);
+            ttyusb_cancel_thxd(p_serial);
+            
+            /*add liwei for fix bugs start*/
+            flag_delay_run_flow = 0 ;
+            /*add liwei for fix bugs end*/
+            ECM_log(ECM_LOG_L_4,"[info] Port Error,Will reboot~");
+
+            sm_rslt = ECM_AUTO_SM_TERMINAL;
+            ECM_log(ECM_LOG_L_3,"[INFO] Set ECM_AUTO_SM_TERMINAL02...........");
+            /*add liwei for port error end*/
         }
         else
         {
-            /*after 30 seconds we will bootup the flow:ECM_auto_under_connect_flow*/
+            /*after 30 seconds we will bootup the flow:ECM_AUTO_SM_STATE_CALLUP*/
             ECM_log(ECM_LOG_L_4,"[info] ECM_auto_sm_under_disconn Entry");
-
+            
             ITC_set_timer(&ECM_call_timer,ECM_AUTO_RETRY_INTV,0);
             flag_delay_run_flow = 1 ;
             pos_auto_callup_substate = 0;
@@ -5063,7 +5267,7 @@ ECM_AUTO_SM_JUMP_T ECM_auto_sm_under_disconn(ttyusb_dev_t* p_serial, ECM_AUTO_SM
         flag_delay_run_flow = 1 ;
         pos_auto_callup_substate = 0;
 
-#endif
+#endif   
 
     }
     else if (ECM_AUTO_SM_TIMEOUT_EVT==evt)
@@ -5078,6 +5282,13 @@ ECM_AUTO_SM_JUMP_T ECM_auto_sm_under_disconn(ttyusb_dev_t* p_serial, ECM_AUTO_SM
             sm_rslt = ECM_AUTO_SM_JUMP_CALLUP;
             ITC_clear_timer(&ECM_call_timer);
         }
+        /*add liwei for fix bugs start*/
+        else
+        {
+            ECM_log(ECM_LOG_L_3,"[info] ECM_auto_sm_under_disconn Error");
+        }
+        /*add liwei for fix bugs end*/
+
     }
     else if (ECM_AUTO_SM_EXIT_EVT==evt)
     {
@@ -5107,7 +5318,7 @@ ECM_AUTO_SM_JUMP_T ECM_auto_sm_under_disconn(ttyusb_dev_t* p_serial, ECM_AUTO_SM
 
 
 
-ECM_AUTO_SM_JUMP_T ECM_auto_sm    (ttyusb_dev_t* p_serial, ECM_AUTO_SM_EVENT_T evt,
+ECM_AUTO_SM_JUMP_T ECM_auto_sm    (ttyusb_dev_t* p_serial, ECM_AUTO_SM_EVENT_T evt,     
     user_cfg_item_t* cfg,   unsigned int* error, void* in, void* out)
 {
     /*auto sm*/
@@ -5119,11 +5330,11 @@ ECM_AUTO_SM_JUMP_T ECM_auto_sm    (ttyusb_dev_t* p_serial, ECM_AUTO_SM_EVENT_T e
         ECM_auto_callup_state = ECM_AUTO_SM_STATE_CALLUP;
         sm_rslt = ECM_AUTO_SM_JUMP_CALLUP;
     }
-    else if (ECM_AUTO_SM_STATE_CALLUP==ECM_auto_callup_state)
+    else if (ECM_AUTO_SM_STATE_CALLUP==ECM_auto_callup_state)    
     {
         sm_rslt = ECM_auto_sm_callup(p_serial,evt,cfg,error,in,out);
     }
-    else if (ECM_AUTO_SM_STATE_DISCON==ECM_auto_callup_state)
+    else if (ECM_AUTO_SM_STATE_DISCON==ECM_auto_callup_state)    
     {
         sm_rslt = ECM_auto_sm_under_disconn(p_serial,evt,cfg,error,in,out);
     }
@@ -5131,7 +5342,7 @@ ECM_AUTO_SM_JUMP_T ECM_auto_sm    (ttyusb_dev_t* p_serial, ECM_AUTO_SM_EVENT_T e
     {
         sm_rslt = ECM_auto_sm_under_connect(p_serial,evt,cfg,error,in,out);
     }
-    else if (ECM_AUTO_SM_STATE_CALLDOWN==ECM_auto_callup_state)
+    else if (ECM_AUTO_SM_STATE_CALLDOWN==ECM_auto_callup_state)    
     {
         sm_rslt = ECM_auto_sm_calldown(p_serial,evt,cfg,error,in,out);
     }
@@ -5199,7 +5410,7 @@ ECM_AUTO_SM_JUMP_T ECM_auto_sm    (ttyusb_dev_t* p_serial, ECM_AUTO_SM_EVENT_T e
                 /*set to connect, notify user */
                 sm_rslt = ECM_auto_sm_callup(p_serial,ECM_AUTO_SM_EXIT_EVT,cfg,error,in,out);
             }
-            else if (ECM_auto_callup_state_last==ECM_AUTO_SM_STATE_DISCON)
+            else if (ECM_auto_callup_state_last==ECM_AUTO_SM_STATE_DISCON)       
             {
 
                 /* set to connect and clear retry_times */
@@ -5213,11 +5424,11 @@ ECM_AUTO_SM_JUMP_T ECM_auto_sm    (ttyusb_dev_t* p_serial, ECM_AUTO_SM_EVENT_T e
 
                 sm_rslt = ECM_auto_sm_under_disconn(p_serial,ECM_AUTO_SM_EXIT_EVT,cfg,error,in,out);
             }
-            else if (ECM_auto_callup_state_last==ECM_AUTO_SM_STATE_CONNECT)
+            else if (ECM_auto_callup_state_last==ECM_AUTO_SM_STATE_CONNECT) 
             {
                 sm_rslt = ECM_auto_sm_under_connect(p_serial,ECM_AUTO_SM_EXIT_EVT,cfg,error,in,out);
             }
-            else if (ECM_auto_callup_state_last==ECM_AUTO_SM_STATE_CALLDOWN)
+            else if (ECM_auto_callup_state_last==ECM_AUTO_SM_STATE_CALLDOWN)       
             {
                 sm_rslt = ECM_auto_sm_calldown(p_serial,ECM_AUTO_SM_EXIT_EVT,cfg,error,in,out);
             }
@@ -5268,7 +5479,7 @@ ECM_AUTO_SM_JUMP_T ECM_auto_sm    (ttyusb_dev_t* p_serial, ECM_AUTO_SM_EVENT_T e
 
                 sm_rslt = ECM_auto_sm_under_connect(p_serial,ECM_AUTO_SM_EXIT_EVT,cfg,error,in,out);
             }
-            else if (ECM_auto_callup_state_last==ECM_AUTO_SM_STATE_CALLDOWN)
+            else if (ECM_auto_callup_state_last==ECM_AUTO_SM_STATE_CALLDOWN)       
             {
                 sm_rslt = ECM_auto_sm_calldown(p_serial,ECM_AUTO_SM_EXIT_EVT,cfg,error,in,out);
             }
@@ -5282,15 +5493,15 @@ ECM_AUTO_SM_JUMP_T ECM_auto_sm    (ttyusb_dev_t* p_serial, ECM_AUTO_SM_EVENT_T e
             {
                 sm_rslt = ECM_auto_sm_callup(p_serial,ECM_AUTO_SM_EXIT_EVT,cfg,error,in,out);
             }
-            else if (ECM_auto_callup_state_last==ECM_AUTO_SM_STATE_DISCON)
+            else if (ECM_auto_callup_state_last==ECM_AUTO_SM_STATE_DISCON)       
             {
                 sm_rslt = ECM_auto_sm_under_disconn(p_serial,ECM_AUTO_SM_EXIT_EVT,cfg,error,in,out);
             }
-            else if (ECM_auto_callup_state_last==ECM_AUTO_SM_STATE_CONNECT)
+            else if (ECM_auto_callup_state_last==ECM_AUTO_SM_STATE_CONNECT)       
             {
                 sm_rslt = ECM_auto_sm_under_connect(p_serial,ECM_AUTO_SM_EXIT_EVT,cfg,error,in,out);
             }
-            else if (ECM_auto_callup_state_last==ECM_AUTO_SM_STATE_CALLDOWN)
+            else if (ECM_auto_callup_state_last==ECM_AUTO_SM_STATE_CALLDOWN)       
             {
                 sm_rslt = ECM_auto_sm_calldown(p_serial,ECM_AUTO_SM_EXIT_EVT,cfg,error,in,out);
             }
@@ -5299,20 +5510,20 @@ ECM_AUTO_SM_JUMP_T ECM_auto_sm    (ttyusb_dev_t* p_serial, ECM_AUTO_SM_EVENT_T e
 
         }
         else if (ECM_AUTO_SM_JUMP_REBOOT==sm_rslt)
-        {
+        {        
             if (ECM_auto_callup_state_last==ECM_AUTO_SM_STATE_CALLUP)
             {
                 sm_rslt = ECM_auto_sm_callup(p_serial,ECM_AUTO_SM_EXIT_EVT,cfg,error,in,out);
             }
-            else if (ECM_auto_callup_state_last==ECM_AUTO_SM_STATE_DISCON)
+            else if (ECM_auto_callup_state_last==ECM_AUTO_SM_STATE_DISCON)       
             {
                 sm_rslt = ECM_auto_sm_under_disconn(p_serial,ECM_AUTO_SM_EXIT_EVT,cfg,error,in,out);
             }
-            else if (ECM_auto_callup_state_last==ECM_AUTO_SM_STATE_CONNECT)
+            else if (ECM_auto_callup_state_last==ECM_AUTO_SM_STATE_CONNECT)       
             {
                 sm_rslt = ECM_auto_sm_under_connect(p_serial,ECM_AUTO_SM_EXIT_EVT,cfg,error,in,out);
             }
-            else if (ECM_auto_callup_state_last==ECM_AUTO_SM_STATE_CALLDOWN)
+            else if (ECM_auto_callup_state_last==ECM_AUTO_SM_STATE_CALLDOWN)       
             {
                 sm_rslt = ECM_auto_sm_calldown(p_serial,ECM_AUTO_SM_EXIT_EVT,cfg,error,in,out);
             }
@@ -5327,7 +5538,7 @@ ECM_AUTO_SM_JUMP_T ECM_auto_sm    (ttyusb_dev_t* p_serial, ECM_AUTO_SM_EVENT_T e
                 pthread_mutex_lock(&usr_monitor_mux);
                 usr_monitor_info.error_code = *error ;
                 pthread_mutex_unlock(&usr_monitor_mux);
-
+        
                 ECM_log(ECM_LOG_L_3,"[info] ECM_auto_sm after error=%d",*error);
             }
         }
@@ -5365,19 +5576,42 @@ unsigned int ECM_auto_exec_at_flow(ttyusb_dev_t* p_serial, user_cfg_item_t* cfg)
 
         ITC_signal_init();
 
-        rflow = ECM_auto_sm(p_serial,ECM_AUTO_SM_ENTRY_EVT,cfg,&at_err_id,NULL,NULL);
-
+        /*add liwei for bug fix start*/
         itc_msg_timer      = 0 ;
         itc_msg_atcmd      = 0 ;
         itc_msg_terminal = 0 ;
+        
+        rflow = ECM_auto_sm(p_serial,ECM_AUTO_SM_ENTRY_EVT,cfg,&at_err_id,NULL,NULL);
+        /*add liwei for bug fix end*/        
+
+        
+        /*add liwei for bug fix start*/
+        if (rflow==ECM_AUTO_SM_TERMINAL)
+        {
+            ECM_log(ECM_LOG_L_3,"[info] ECM_auto_exec_at_flow before exit~");
+        }
+        /*add liwei for bug fix end*/
 
         while(1)
         {
+            /*add liwei for bug fix start*/
+            if (rflow==ECM_AUTO_SM_TERMINAL)
+            {
+                //signal(SIGINT,SIG_IGN);
+                //signal(SIGALRM,SIG_IGN);
+                /*add liwei for bug fix start */
+                ITC_clear_timer(&ECM_call_timer);
+                ECM_log(ECM_LOG_L_3,"[info] ECM_auto_exec_at_flow after exit~");
+                //ECM_auto_call_status==ECM_AUTO_CALL_CLOSE;
+                /*add liwei for bug fix end*/
+                break;
+            }
+            /*add liwei for bug fix end*/
 
             pthread_mutex_lock(&itc_msg_mux);
 
             while ((0==itc_msg_timer)&&(0==itc_msg_atcmd)&&(0==itc_msg_terminal)      &&(0==itc_msg_quit)     &&(0==itc_msg_reboot))
-            {
+            {                    
                     pthread_cond_wait(&itc_msg_cond, &itc_msg_mux);
             }
             if (1==itc_msg_timer)
@@ -5393,21 +5627,21 @@ unsigned int ECM_auto_exec_at_flow(ttyusb_dev_t* p_serial, user_cfg_item_t* cfg)
                 rflow = ECM_auto_sm(p_serial,ECM_AUTO_SM_AT_RSP_EVT,cfg,&at_err_id,NULL,NULL);
             }
             if (1==itc_msg_terminal)
-            {
+            {                
                 itc_msg_terminal = 0;
                 at_err_id = 0 ;
                 rflow = ECM_auto_sm(p_serial,ECM_AUTO_SM_KILL_EVT,cfg,&at_err_id,NULL,NULL);
             }
 
             if (1==itc_msg_quit)
-            {
+            {                
                 itc_msg_quit = 0;
                 at_err_id = 0 ;
                 rflow = ECM_auto_sm(p_serial,ECM_AUTO_SM_REQ_QUIT_EVT,cfg,&at_err_id,NULL,NULL);
             }
 
             if (1==itc_msg_reboot)
-            {
+            {                
                 itc_msg_reboot = 0;
                 at_err_id = 0 ;
                 rflow = ECM_auto_sm(p_serial,ECM_AUTO_SM_REQ_REBOOT_EVT,cfg,&at_err_id,NULL,NULL);
@@ -5415,12 +5649,20 @@ unsigned int ECM_auto_exec_at_flow(ttyusb_dev_t* p_serial, user_cfg_item_t* cfg)
 
             pthread_mutex_unlock(&itc_msg_mux);
 
-            if (rflow==ECM_AUTO_SM_TERMINAL)
-            {
-                //signal(SIGINT,SIG_IGN);
-                //signal(SIGALRM,SIG_IGN);
-                break;
-            }
+            /*add liwei for bug fix start*/
+            //if (rflow==ECM_AUTO_SM_TERMINAL)
+            //{
+            //    //signal(SIGINT,SIG_IGN);
+            //    //signal(SIGALRM,SIG_IGN);
+            //    /*add liwei for bug fix start */
+            //    ITC_clear_timer(&ECM_call_timer);
+            //    ECM_log(ECM_LOG_L_3,"[info] ECM_auto_exec_at_flow after exit~");
+            //    //ECM_auto_call_status==ECM_AUTO_CALL_CLOSE;
+            //    /*add liwei for bug fix end*/
+            //    break;
+            //}
+            /*add liwei for bug fix end*/
+
         }
     }while(0);
 
@@ -5436,7 +5678,10 @@ unsigned int ECM_auto_exec_at_flow(ttyusb_dev_t* p_serial, user_cfg_item_t* cfg)
 unsigned int ECM_auto_call(char* tty_path, char* v4v6para, char* apn)
 {
     unsigned int      error = 0;
-    ttyusb_dev_t      serial_demo;
+    /*add liwei for issue start*/
+    //ttyusb_dev_t      serial_demo;
+    //ttyusb_dev_t g_ecm_auto_serial_demo;
+    /*add liwei for issue end*/
     user_cfg_item_t usr_cfg;
     unsigned int      tty_path_len = 0 ;
 
@@ -5446,7 +5691,10 @@ unsigned int ECM_auto_call(char* tty_path, char* v4v6para, char* apn)
 
         ECM_auto_clear_usr_monitor();
 
-        ttyusb_init(&serial_demo);
+        /*add liwei for issue start*/
+        //ttyusb_init(&serial_demo);
+        ttyusb_init(&g_ecm_auto_serial_demo);
+        /*add liwei for issue end*/
 
         ECM_usr_cfg_init(&usr_cfg);
 
@@ -5454,7 +5702,10 @@ unsigned int ECM_auto_call(char* tty_path, char* v4v6para, char* apn)
 
         tty_path_len = (!tty_path)?0:strlen(tty_path);
 
-        error = ttyusb_config(&serial_demo,tty_path,tty_path_len);
+        /*add liwei for issue start*/
+        //error = ttyusb_config(&serial_demo,tty_path,tty_path_len);
+        error = ttyusb_config(&g_ecm_auto_serial_demo,tty_path,tty_path_len);
+        /*add liwei for issue end*/
 
         if (0 != error)
         {
@@ -5462,7 +5713,10 @@ unsigned int ECM_auto_call(char* tty_path, char* v4v6para, char* apn)
             break;
         }
 
-        error = ttyusb_open(&serial_demo);
+        /*add liwei for issue start*/
+        //error = ttyusb_open(&serial_demo);
+        error = ttyusb_open(&g_ecm_auto_serial_demo);
+        /*add liwei for issue end*/
 
         if (0 != error)
         {
@@ -5470,37 +5724,63 @@ unsigned int ECM_auto_call(char* tty_path, char* v4v6para, char* apn)
             break;
         }
 
-        error = ttyusb_reg_cb(&serial_demo,ITC_send_atcmd_msg);
+        /*add liwei for issue start*/
+        //error = ttyusb_reg_cb(&serial_demo,ITC_send_atcmd_msg);
+        error = ttyusb_reg_cb(&g_ecm_auto_serial_demo,ITC_send_atcmd_msg);
+        /*add liwei for issue end*/
 
         if (0 != error)
         {
             ECM_auto_call_status = ECM_AUTO_CALL_REG_FAIL;
-            (void)ttyusb_close(&serial_demo);
+            /*add liwei for issue start*/
+            //(void)ttyusb_close(&serial_demo);
+            (void)ttyusb_close(&g_ecm_auto_serial_demo);
+            /*add liwei for issue end*/
             break;
         }
+        
+        /*add liwei for issue start*/
+        //error = ttyusb_start_recv(&serial_demo);
+        error = ttyusb_start_recv(&g_ecm_auto_serial_demo);
+        /*add liwei for issue end*/
 
-        error = ttyusb_start_recv(&serial_demo);
 
         if (0 != error)
         {
             ECM_auto_call_status = ECM_AUTO_CALL_RCV_FAIL;
-            (void)ttyusb_close(&serial_demo);
+            /*add liwei for issue start*/
+            //(void)ttyusb_close(&serial_demo);
+            (void)ttyusb_close(&g_ecm_auto_serial_demo);
+            /*add liwei for issue end*/
+
             break;
         }
 
         ECM_auto_sm_init();
 
         ECM_auto_call_status = ECM_AUTO_CALL_ONLINE;
-        error = ECM_auto_exec_at_flow(&serial_demo,&usr_cfg);
+        /*add liwei for issue start*/
+        //error = ECM_auto_exec_at_flow(&serial_demo,&usr_cfg);
+        error = ECM_auto_exec_at_flow(&g_ecm_auto_serial_demo,&usr_cfg);
+        /*add liwei for issue end*/
+
 
         if (0 != error)
         {
-            (void)ttyusb_close(&serial_demo);
+            /*add liwei for issue start*/
+            //(void)ttyusb_close(&serial_demo);
+            (void)ttyusb_close(&g_ecm_auto_serial_demo);
+            /*add liwei for issue end*/
+
             ECM_auto_call_status = ECM_AUTO_CALL_EXIT;
             break;
         }
 
-        (void)ttyusb_close(&serial_demo);
+        /*add liwei for issue start*/
+        //(void)ttyusb_close(&serial_demo);
+        (void)ttyusb_close(&g_ecm_auto_serial_demo);
+        /*add liwei for issue end*/
+
         ECM_auto_call_status = ECM_AUTO_CALL_OFFLINE;
 
     } while(0);
@@ -5524,7 +5804,7 @@ void* ECM_auto_call_thxd(void* para)
     unsigned int result = 0 ;
 
     ECM_auto_call_txd_para_t*     txd_para=(ECM_auto_call_txd_para_t*)para;
-
+    
 #if (ECM_CALL_EXIT_METHOD==    ECM_EXIT_METHOD_DETACH)
     pthread_detach(pthread_self());
     ECM_log(ECM_LOG_L_2,"[INFO] ECM_auto_call_thxd set detach method");
@@ -5553,7 +5833,7 @@ unsigned int ECM_auto_demo_start(char* tty_path, char* v4v6para, char* apn)
 {
     unsigned int                error_code = 0;
     int                         var_thxd_user = 0;
-
+    
 
     unsigned int                var_thxd_wait=0;
 
@@ -5562,7 +5842,7 @@ unsigned int ECM_auto_demo_start(char* tty_path, char* v4v6para, char* apn)
         /*copy parameter */
         bzero((void*)&ECM_auto_call_configure,sizeof(ECM_auto_call_txd_para_t)) ;
 
-        if (apn)
+        if (apn)            
         {
             if (strlen(apn)<64)
             {
@@ -5660,7 +5940,7 @@ void ECM_auto_demo_quit_msg(void)
     {
         ITC_send_quit_msg();
 
-#if (ECM_CALL_EXIT_METHOD==    ECM_EXIT_METHOD_PJOIN)
+#if (ECM_CALL_EXIT_METHOD==    ECM_EXIT_METHOD_PJOIN)        
         pthread_join(ECM_auto_call_txd_id,NULL);
 #endif
 
@@ -5692,11 +5972,11 @@ void ECM_auto_demo_reboot_msg(void)
     if (ECM_auto_call_status==ECM_AUTO_CALL_ONLINE)
     {
         ITC_send_reboot_msg();
-#if (ECM_CALL_EXIT_METHOD==    ECM_EXIT_METHOD_PJOIN)
+#if (ECM_CALL_EXIT_METHOD==    ECM_EXIT_METHOD_PJOIN)  
         pthread_join(ECM_auto_call_txd_id,NULL);
 #endif
 
-#if (ECM_CALL_EXIT_METHOD==    ECM_EXIT_METHOD_SLEEP)
+#if (ECM_CALL_EXIT_METHOD==    ECM_EXIT_METHOD_SLEEP)  
         while(ECM_auto_call_status!=ECM_AUTO_CALL_CLOSE       )
         {
             sleep(1);
@@ -5745,3 +6025,6 @@ unsigned int ECM_auto_check_port(ttyusb_dev_t* p_serial)
 
     return error_code ;
 }
+
+
+

@@ -35,7 +35,7 @@ void ECM_log(unsigned int log_level, const char* msg, ...)
 {
     char    buf[ITC_DBG_BUF_LEN+64] = {0};
     va_list ap;
-
+    
     va_start(ap,msg);
     vsprintf(buf,msg,ap);
     va_end(ap);
@@ -64,7 +64,6 @@ void ECM_aux_led_on(void)
     sprintf(led_cmd_str,"echo 200 > %s",ECM_ALED_NODE_ON);
     if(0==access(ECM_ALED_NODE_ON, F_OK))
     {
-        ECM_print("%s", led_cmd_str);
         system(led_cmd_str);
     }
 
@@ -119,3 +118,5 @@ void ECM_aux_led_fls(void)
 }
 
 #endif
+
+

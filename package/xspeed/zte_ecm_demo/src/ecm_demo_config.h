@@ -4,8 +4,8 @@
  * @Copyright:                      GoSUNCN
 * @Website:                         www.ztewelink.com
 * @Email:                           ztewelink@zte.com.cn
-* @version:                         "ECM_CALLV1.0.0B10"
-* @date:                            "2018-11-19"
+* @version:                         "ECM_CALLV1.0.1B01"
+* @date:                            "2019-01-11"
 
 * History:
 
@@ -44,6 +44,13 @@
 ......................................................................................For Alibaba Linux OpenWRT system.
 ......................................................................................ECM_CALLV1.0.0B10
 ......................................................................................Wei,LI,2018_11_19
+
+1. If LTE Module switch port, fix the switch port bugs...
+2. Adjust some log information 
+
+......................................................................................For Alibaba Linux OpenWRT system.
+......................................................................................ECM_CALLV1.0.0B10
+......................................................................................Wei,LI,2019_01_11
 
 * ============================================================================*/
 
@@ -91,12 +98,15 @@
 #define ECM_AUTO_RETRY_INTV                    15    /*ECM auto connnect interv time*/
 
 
-#define ECM_CALL_VERSION                       "ECM_CALLV1.0.0B10"
+#define ECM_CALL_VERSION                       "ECM_CALLV1.0.1B01"
 
-#define ECM_CALL_DATE                          "2018-11-19"
+#define ECM_CALL_DATE                          "2019-01-11"
 
 #define ECM_CALL_AUTO_PORT                     ECM_DEMO_ON
 
+/*add liwei for fix gswerr id 0000 start */
+#define ECM_CALL_FIX_GSWERR_ID_0000                          ECM_DEMO_ON
+/*add liwei for fix gswerr id 0000 end */
 #if 0
 #define   ECM_CALL_HOST_PLUG_POLARITY                        1
 #define ECM_CALL_HOST_PLUG_PULL                              3
@@ -105,8 +115,8 @@
 #define ECM_CALL_HOST_PLUG_PULL                              0
 #endif
 
-/*add liwei for xspeed project led operation*/
-#define ECM_AUTO_LED_ON                        ECM_DEMO_ON
+/*add liwei for ali project led operation*/
+#define ECM_AUTO_LED_ON                        ECM_DEMO_OFF
 
 #if (ECM_AUTO_LED_ON==ECM_DEMO_ON)
 #define ECM_ALED_NODE_ON                           "/sys/class/leds/lte/delay_on"
@@ -371,6 +381,16 @@ typedef enum
     E_ECM_PERSON_AT_OTHER_ERR=324,/* Personalization at send                 other error*/
     E_ECM_PERSON_AT_TERMINAL=325,/* Personalization at send terminal */
 
+/*add liwei for fix gswerr id 0000 start */
+#if (ECM_CALL_FIX_GSWERR_ID_0000    ==ECM_DEMO_ON)
+    E_ECM_GSWERR_QUERY_FAIL=330,/* AT+GSWERR=0000: send fail */
+    E_ECM_GSWERR_QRECV_ISSUE=331,/* AT+GSWERR=0000: recv fail */
+    E_ECM_GSWERR_QUERY_MAX=332,/* AT+GSWERR=0000: send                over max*/
+    E_ECM_GSWERR_QRESEND_ERR=333,/* AT+GSWERR=0000: send                over max*/
+    E_ECM_GSWERR_QOTHER_ERR=334,/* AT+GSWERR=0000: send                 other error*/
+    E_ECM_GSWERR_QTERMINAL=335,            /* AT+GSWERR=0000: send terminal */
+#endif
+/*add liwei for fix gswerr id 0000 end */
 
 } ECM_ERROR_CODE_TABLE_T;
 
